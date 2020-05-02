@@ -12,27 +12,41 @@ CD = "cd"
 
 
 class Unit:
+    """Represents a Unit by storing the numerator and the denominators of the unit as Si-units.
+    Supports arithmetic operations like multiplying and dividing with other :class:`.Unit` instances. When representing
+    the unit an algorithm tries to find the best fitting unit out of the Si-units via a lookup table."""
     def __init__(self, numerators=[], denominators=[]):
+        """Initializes the Unit class.
 
+        Args:
+            numerators (list): List of units which should be numerators.
+            denominators (list): List of units which should be denominators.
+        """
         self.numerators = []
         self.denominators = []
-
+        # Extract list from lookup table which only contains entries which describe units by si-units
+        units_in_si = [x for x in look_up_table
+                       if set(x[0]).issubset(si_base_units) and set(x[1]).issubset(si_base_units)]
         for numerator in numerators:
             if numerator in si_base_units:
                 self.numerators.append(numerator)
                 continue
-
-            unit_index = [x[2] for x in look_up_table].index(numerator)
-            self.numerators += list(look_up_table[unit_index][0])
-            self.denominators += list(look_up_table[unit_index][1])
+            for i in units_in_si:
+                if i[2] == numerator:
+                    self.numerators += i[0]
+                    self.denominators += i[1]
+                    continue
 
         for denominator in denominators:
             if denominator in si_base_units:
                 self.denominators.append(denominator)
                 continue
-            unit_index = [x[2] for x in look_up_table].index(denominator)
-            self.numerators += list(look_up_table[unit_index][1])
-            self.denominators += list(look_up_table[unit_index][0])
+
+            for i in units_in_si:
+                if i[2] == denominator:
+                    self.numerators += i[1]
+                    self.denominators += i[0]
+                    continue
         tmp = copy.copy(self.numerators)
         for numerator in tmp:
             if numerator in self.denominators:
