@@ -1,4 +1,5 @@
 import copy
+from dataclasses import dataclass
 
 si_base_units = ["s", "kg", "A", "m", "K", "mol", "cd"]
 
@@ -25,16 +26,16 @@ class Unit:
         self.numerators = []
         self.denominators = []
         # Extract list from lookup table which only contains entries which describe units by si-units
-        units_in_si = [x for x in look_up_table
-                       if set(x[0]).issubset(si_base_units) and set(x[1]).issubset(si_base_units)]
+        si_conversions = [x for x in look_up_table
+                          if set(x.numerators).issubset(si_base_units) and set(x.denominators).issubset(si_base_units)]
         for numerator in numerators:
             if numerator in si_base_units:
                 self.numerators.append(numerator)
                 continue
-            for i in units_in_si:
-                if i[2] == numerator:
-                    self.numerators += i[0]
-                    self.denominators += i[1]
+            for conversion in si_conversions:
+                if conversion.result == numerator:
+                    self.numerators += conversion.numerators
+                    self.denominators += conversion.denominators
                     continue
 
         for denominator in denominators:
@@ -42,10 +43,10 @@ class Unit:
                 self.denominators.append(denominator)
                 continue
 
-            for i in units_in_si:
-                if i[2] == denominator:
-                    self.numerators += i[1]
-                    self.denominators += i[0]
+            for conversion in si_conversions:
+                if conversion.result == denominator:
+                    self.numerators += conversion.denominators
+                    self.denominators += conversion.numerators
                     continue
         tmp = copy.copy(self.numerators)
         for numerator in tmp:
@@ -82,61 +83,65 @@ class Unit:
 
 
 def find_units(string_numerators, string_denominators, numerators, denominators):
-    changed = False
     found = True
     while found:
         found = False
-        for i in look_up_table:
-            if all([True if numerators.count(j) >= i[0].count(j) else False for j in i[0]]) and \
-                    all([True if denominators.count(j) >= i[1].count(j) else False for j in i[1]]):
-
-                for j in i[0]:
+        for conversion in look_up_table:
+            if all([True if numerators.count(j) >= conversion.numerators.count(j) else False for j in conversion.numerators]) and \
+                    all([True if denominators.count(j) >= conversion.denominators.count(j) else False for j in conversion.denominators]):
+                for j in conversion.numerators:
                     numerators.remove(j)
-                for j in i[1]:
+                for j in conversion.denominators:
                     denominators.remove(j)
-                numerators.append(i[2])
-                found = True
-                changed = True
-                break
-
-            elif all([True if numerators.count(j) >= i[1].count(j) else False for j in i[1]]) and \
-                    all([True if denominators.count(j) >= i[0].count(j) else False for j in i[0]]):
-                for j in i[0]:
-                    denominators.remove(j)
-                for j in i[1]:
-                    numerators.remove(j)
-                denominators.append(i[2])
-                changed = True
+                numerators.append(conversion.result)
                 found = True
                 break
-    if changed:
-        return find_units(string_numerators, string_denominators, numerators, denominators)
-    else:
-        for i in numerators:
-            if string_numerators:
-                string_numerators = string_numerators + "*" + i
-            else:
-                string_numerators = i
 
-        for i in denominators:
-            if string_denominators:
-                string_denominators = string_denominators + "*" + i
-            else:
-                string_denominators = i
+            elif all([True if numerators.count(j) >= conversion.denominators.count(j) else False for j in conversion.denominators]) and \
+                    all([True if denominators.count(j) >= conversion.numerators.count(j) else False for j in conversion.numerators]) and conversion.reciprocal is True:
+                for j in conversion.numerators:
+                    denominators.remove(j)
+                for j in conversion.denominators:
+                    numerators.remove(j)
+                denominators.append(conversion.result)
+                found = True
+                break
 
-        if string_numerators and not string_denominators:
-            return string_numerators
-        elif string_denominators and not string_numerators:
-            return "1/(" + string_denominators + ")"
+    for numerator in numerators:
+        if string_numerators:
+            string_numerators = string_numerators + "*" + numerator
         else:
-            return "(" + string_numerators + ")/(" + string_denominators + ")"
+            string_numerators = numerator
+
+    for denominator in denominators:
+        if string_denominators:
+            string_denominators = string_denominators + "*" + denominator
+        else:
+            string_denominators = denominator
+
+    if string_numerators and not string_denominators:
+        return string_numerators
+    elif string_denominators and not string_numerators:
+        return "1/(" + string_denominators + ")"
+    else:
+        return "(" + string_numerators + ")/(" + string_denominators + ")"
 
 
-look_up_table = [((M, M, KG), (S, S, S, A, A), "O"),
-                 ((M, M, KG), (S, S, S, A), "V"),
-                 ((S, S, S, S, A, A), (M, M, KG), "F"),
-                 ((S, S, S, A, A), (M, M, KG), "S"),
-                 ((M, M, KG), (S, S, S), "W"),
-                 (("V",), (A,), "O"),
-                 (("V", A), (), "W"),
-                 ((A, S), (), "C")]
+@dataclass
+class Conversion:
+    """Class which stores information about a unit conversion"""
+    numerators: tuple
+    denominators: tuple
+    result: str
+    reciprocal: bool = True
+
+
+look_up_table = [Conversion((M, M, KG), (S, S, S, A, A), "O"),
+                 Conversion((M, M, KG), (S, S, S, A), "V"),
+                 Conversion((S, S, S, S, A, A), (M, M, KG), "F"),
+                 Conversion((S, S, S, A, A), (M, M, KG), "S"),
+                 Conversion((M, M, KG), (S, S, S), "W"),
+                 Conversion(("V",), (A,), "O"),
+                 Conversion(("V", A), (), "W"),
+                 Conversion((), ("O",), "S", False),
+                 Conversion((A, S), (), "C")]
