@@ -24,9 +24,11 @@ class Unit:
         """
         self.numerators = []
         self.denominators = []
+        self.repr = None
         # Extract list from lookup table which only contains entries which describe units by si-units
         units_in_si = [x for x in look_up_table
                        if set(x[0]).issubset(si_base_units) and set(x[1]).issubset(si_base_units)]
+        # Search si representation of all given numerators and add them to the numerator list
         for numerator in numerators:
             if numerator in si_base_units:
                 self.numerators.append(numerator)
@@ -36,7 +38,7 @@ class Unit:
                     self.numerators += i[0]
                     self.denominators += i[1]
                     continue
-
+        # Search si representation of all given denominators and add them to the denominator list
         for denominator in denominators:
             if denominator in si_base_units:
                 self.denominators.append(denominator)
@@ -52,6 +54,12 @@ class Unit:
             if numerator in self.denominators:
                 self.denominators.remove(numerator)
                 self.numerators.remove(numerator)
+        # Calculates the representation of the created unit
+        tmp_numerators = copy.copy(self.numerators)
+        tmp_denominators = copy.copy(self.denominators)
+        result_numerators = ""
+        result_denominators = ""
+        self.repr = find_units(result_numerators, result_denominators, tmp_numerators, tmp_denominators)
 
     def __mul__(self, other):
         result = Unit(copy.copy(self.numerators), copy.copy(self.denominators))
@@ -74,11 +82,7 @@ class Unit:
         return self // other
 
     def __repr__(self):
-        tmp_numerators = copy.copy(self.numerators)
-        tmp_denominators = copy.copy(self.denominators)
-        result_numerators = ""
-        result_denominators = ""
-        return find_units(result_numerators, result_denominators, tmp_numerators, tmp_denominators)
+        return self.repr
 
 
 def find_units(string_numerators, string_denominators, numerators, denominators):
@@ -137,6 +141,11 @@ look_up_table = [((M, M, KG), (S, S, S, A, A), "O"),
                  ((S, S, S, S, A, A), (M, M, KG), "F"),
                  ((S, S, S, A, A), (M, M, KG), "S"),
                  ((M, M, KG), (S, S, S), "W"),
+                 ((M, M, KG), (S, S), "J"),
+                 ((M, KG), (S, S), "N"),
+                 ((KG,), (M, S, S), "Pa"),
                  (("V",), (A,), "O"),
                  (("V", A), (), "W"),
-                 ((A, S), (), "C")]
+                 (("N", M), (), "J"),
+                 ((A, S), (), "C"),
+                 ]
