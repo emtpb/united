@@ -51,7 +51,7 @@ def test_dividing():
                          [(["s"], [], "s"), (["V", "A"], [], "W"), ([], ["V", "A"], "1/(W)"), (["V"], ["A"], "O"),
                           (["m", "m", "kg"], ["s", "s", "s", "A"], "V"),
                           ([], ["O"], "S"), ([], ["A", "s"], "1/(C)"), (["F"], ["C"], "1/(V)"),
-                          (["V", "s"], [], "(J)/(A)")])
+                          (["V", "s"], [], "Wb"), (["m", "kg"], ["s", "s"], "N")])
 def test_repr(numerator, denominator, expected):
     a = Unit(numerator, denominator)
     assert repr(a) == expected
