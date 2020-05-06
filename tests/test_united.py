@@ -2,6 +2,7 @@
 import pytest
 from collections import Counter
 
+import united.united
 from united.united import Unit
 
 
@@ -53,5 +54,6 @@ def test_dividing():
                           ([], ["O"], "S"), ([], ["A", "s"], "1/(C)"), (["F"], ["C"], "1/(V)"),
                           (["V", "s"], [], "Wb"), (["m", "kg"], ["s", "s"], "N")])
 def test_repr(numerator, denominator, expected):
+    united.united.priority_configuration = "electric"
     a = Unit(numerator, denominator)
     assert repr(a) == expected

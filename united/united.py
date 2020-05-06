@@ -10,11 +10,41 @@ K = "K"
 MOL = "mol"
 CD = "cd"
 
+look_up_table = [((M, M, KG), (S, S, S, A, A), "O"),
+                 ((M, M, KG), (S, S, S, A), "V"),
+                 ((S, S, S, S, A, A), (M, M, KG), "F"),
+                 ((S, S, S, A, A), (M, M, KG), "S"),
+                 ((M, M, KG), (S, S, A, A), "H"),
+                 ((M, M, KG), (S, S, S), "W"),
+                 ((M, M, KG), (S, S, A), "Wb"),
+                 ((M, M, KG), (S, S), "J"),
+                 ((M, KG), (S, S), "N"),
+                 ((KG,), (S, S, A), "T"),
+                 ((KG,), (M, S, S), "Pa"),
+                 (("V",), (A,), "O"),
+                 (("V", A), (), "W"),
+                 (("N", M), (), "J"),
+                 ((A, S), (), "C"),
+                 ]
+# Extract list from lookup table which only contains entries which describe units by si-units
+units_in_si = [x for x in look_up_table if set(x[0]).issubset(si_base_units) and set(x[1]).issubset(si_base_units)]
+
+default_priority = [x for x in range(len(look_up_table))]
+
+electric_priority = [0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 12, 14, 6, 8, 10, 13]
+
+mechanic_priority = [7, 8, 10, 14, 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 12, 14]
+
+priority_dict = {"default": default_priority, "electric": electric_priority, "mechanic": mechanic_priority}
+
+priority_configuration = "default"
+
 
 class Unit:
     """Represents a Unit by storing the numerator and the denominators of the unit as Si-units.
     Supports arithmetic operations like multiplying and dividing with other :class:`.Unit` instances. When representing
     the unit an algorithm tries to find the best fitting unit out of the Si-units via a lookup table."""
+
     def __init__(self, numerators=[], denominators=[]):
         """Initializes the Unit class.
 
@@ -22,12 +52,10 @@ class Unit:
             numerators (list): List of units which should be numerators.
             denominators (list): List of units which should be denominators.
         """
+
         self.numerators = []
         self.denominators = []
         self.repr = None
-        # Extract list from lookup table which only contains entries which describe units by si-units
-        units_in_si = [x for x in look_up_table
-                       if set(x[0]).issubset(si_base_units) and set(x[1]).issubset(si_base_units)]
         # Search si representation of all given numerators and add them to the numerator list
         for numerator in numerators:
             if numerator in si_base_units:
@@ -86,11 +114,12 @@ class Unit:
 
 
 def find_units(string_numerators, string_denominators, numerators, denominators):
+    new_look_up_table = [look_up_table[x] for x in priority_dict[priority_configuration]]
     changed = False
     found = True
     while found:
         found = False
-        for i in look_up_table:
+        for i in new_look_up_table:
             if all([True if numerators.count(j) >= i[0].count(j) else False for j in i[0]]) and \
                     all([True if denominators.count(j) >= i[1].count(j) else False for j in i[1]]):
 
@@ -135,20 +164,3 @@ def find_units(string_numerators, string_denominators, numerators, denominators)
         else:
             return "(" + string_numerators + ")/(" + string_denominators + ")"
 
-
-look_up_table = [((M, M, KG), (S, S, S, A, A), "O"),
-                 ((M, M, KG), (S, S, S, A), "V"),
-                 ((S, S, S, S, A, A), (M, M, KG), "F"),
-                 ((S, S, S, A, A), (M, M, KG), "S"),
-                 ((M, M, KG), (S, S, A, A), "H"),
-                 ((M, M, KG), (S, S, S), "W"),
-                 ((M, M, KG), (S, S, A), "Wb"),
-                 ((M, M, KG), (S, S), "J"),
-                 ((M, KG), (S, S), "N"),
-                 ((KG,), (S, S, A), "T"),
-                 ((KG,), (M, S, S), "Pa"),
-                 (("V",), (A,), "O"),
-                 (("V", A), (), "W"),
-                 (("N", M), (), "J"),
-                 ((A, S), (), "C"),
-                 ]
