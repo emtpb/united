@@ -1,18 +1,55 @@
 import copy
 from dataclasses import dataclass
 
-si_base_units = ["s", "kg", "A", "m", "K", "mol", "cd"]
 
-S = "s"
-KG = "kg"
-A = "A"
-M = "m"
-K = "K"
-MOL = "mol"
-CD = "cd"
+class BaseUnit:
+    def __init__(self, unit, quantity, symbol=None):
+        self.unit = unit
+        self.quantity = quantity
+        self.symbol = symbol
+
+    def __repr__(self):
+        return self.unit
 
 
-class Unit:
+s = BaseUnit("s", "Time", "T")
+kg = BaseUnit("kg", "Mass", "m")
+A = BaseUnit("A", "Ampere", "I")
+m = BaseUnit("m", "Length", "l")
+K = BaseUnit("K", "Temperature", None)
+mol = BaseUnit("mol", "Amount of substance", "N")
+cd = BaseUnit("cd", "luminous intensity", "J")
+O = BaseUnit("O", "Resistance", "R")
+V = BaseUnit("V", "Voltage", "U")
+F = BaseUnit("F", "Capacitance", "C")
+S = BaseUnit("S", "Conductance", None)
+W = BaseUnit("W", "Power", "P")
+C = BaseUnit("C", "Electric charge", "Q")
+
+si_base_units = {"s": s, "kg": kg, "A": A, "m": m, "K": K, "mol": mol, "cd": cd}
+
+
+@dataclass
+class Conversion:
+    """Class which stores information about a unit conversion"""
+    numerators: tuple
+    denominators: tuple
+    result: str
+    reciprocal: bool = True
+
+
+look_up_table = [Conversion((m, m, kg), (s, s, s, A, A), O),
+                 Conversion((m, m, kg), (s, s, s, A), V),
+                 Conversion((s, s, s, s, A, A), (m, m, kg), F),
+                 Conversion((s, s, s, A, A), (m, m, kg), S),
+                 Conversion((m, m, kg), (s, s, s), W),
+                 Conversion((V,), (A,), O),
+                 Conversion((V, A), (), W),
+                 Conversion((), (O,), S, False),
+                 Conversion((A, s), (), C)]
+
+
+class CustomUnit:
     """Represents a Unit by storing the numerator and the denominators of the unit as Si-units.
     Supports arithmetic operations like multiplying and dividing with other :class:`.Unit` instances. When representing
     the unit an algorithm tries to find the best fitting unit out of the Si-units via a lookup table."""
@@ -27,24 +64,25 @@ class Unit:
         self.denominators = []
         # Extract list from lookup table which only contains entries which describe units by si-units
         si_conversions = [x for x in look_up_table
-                          if set(x.numerators).issubset(si_base_units) and set(x.denominators).issubset(si_base_units)]
+                          if set(x.numerators).issubset(si_base_units.values())
+                          and set(x.denominators).issubset(si_base_units.values())]
         for numerator in numerators:
-            if numerator in si_base_units:
-                self.numerators.append(numerator)
+            if numerator in [repr(x) for x in si_base_units.values()]:
+                self.numerators.append(si_base_units[numerator])
                 continue
             for conversion in si_conversions:
-                if conversion.result == numerator:
+                if repr(conversion.result) == numerator:
                     self.numerators += conversion.numerators
                     self.denominators += conversion.denominators
                     continue
 
         for denominator in denominators:
-            if denominator in si_base_units:
-                self.denominators.append(denominator)
+            if denominator in [repr(x) for x in si_base_units.values()]:
+                self.denominators.append(si_base_units[denominator])
                 continue
 
             for conversion in si_conversions:
-                if conversion.result == denominator:
+                if repr(conversion.result) == denominator:
                     self.numerators += conversion.denominators
                     self.denominators += conversion.numerators
                     continue
@@ -55,7 +93,7 @@ class Unit:
                 self.numerators.remove(numerator)
 
     def __mul__(self, other):
-        result = Unit(copy.copy(self.numerators), copy.copy(self.denominators))
+        result = CustomUnit([repr(x) for x in self.numerators], [repr(x) for x in self.denominators])
         for numerator in other.numerators:
             if numerator in result.denominators:
                 result.denominators.remove(numerator)
@@ -69,7 +107,7 @@ class Unit:
         return result
 
     def __floordiv__(self, other):
-        return self * Unit(other.denominators, other.numerators)
+        return self * CustomUnit([repr(x) for x in other.denominators], [repr(x) for x in other.numerators])
 
     def __truediv__(self, other):
         return self // other
@@ -108,12 +146,14 @@ def find_units(string_numerators, string_denominators, numerators, denominators)
                 break
 
     for numerator in numerators:
+        numerator = repr(numerator)
         if string_numerators:
             string_numerators = string_numerators + "*" + numerator
         else:
             string_numerators = numerator
 
     for denominator in denominators:
+        denominator = repr(denominator)
         if string_denominators:
             string_denominators = string_denominators + "*" + denominator
         else:
@@ -125,23 +165,3 @@ def find_units(string_numerators, string_denominators, numerators, denominators)
         return "1/(" + string_denominators + ")"
     else:
         return "(" + string_numerators + ")/(" + string_denominators + ")"
-
-
-@dataclass
-class Conversion:
-    """Class which stores information about a unit conversion"""
-    numerators: tuple
-    denominators: tuple
-    result: str
-    reciprocal: bool = True
-
-
-look_up_table = [Conversion((M, M, KG), (S, S, S, A, A), "O"),
-                 Conversion((M, M, KG), (S, S, S, A), "V"),
-                 Conversion((S, S, S, S, A, A), (M, M, KG), "F"),
-                 Conversion((S, S, S, A, A), (M, M, KG), "S"),
-                 Conversion((M, M, KG), (S, S, S), "W"),
-                 Conversion(("V",), (A,), "O"),
-                 Conversion(("V", A), (), "W"),
-                 Conversion((), ("O",), "S", False),
-                 Conversion((A, S), (), "C")]
