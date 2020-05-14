@@ -52,7 +52,7 @@ look_up_table = [Conversion((m, m, kg), (s, s, s, A, A), O),
                  Conversion((m, m, kg), (s, s, s), W),
                  Conversion((m, m, kg), (s, s, A), Wb),
                  Conversion((m, m, kg), (s, s), J),
-                 Conversion(((m, kg), (s, s), N)),
+                 Conversion((m, kg), (s, s), N),
                  Conversion((kg,), (s, s, A), T),
                  Conversion((kg,), (m, s, s), Pa),
                  Conversion((V,), (A,), O),
@@ -67,9 +67,9 @@ si_base_conversions = [x for x in look_up_table
 
 default_priority = [x for x in range(len(look_up_table))]
 
-electric_priority = [0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 12, 14, 6, 8, 10, 13]
+electric_priority = [0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 12, 14, 15, 6, 8, 10, 13]
 
-mechanic_priority = [7, 8, 10, 14, 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 12, 14]
+mechanic_priority = [7, 8, 10, 14, 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 12, 14, 15]
 
 priority_dict = {"default": default_priority, "electric": electric_priority, "mechanic": mechanic_priority}
 
@@ -146,6 +146,7 @@ class Unit:
 
     def __repr__(self):
         return self.repr
+
 
 def find_units(numerators, denominators):
     """Iterates over the look_up_table and tries to find conversion for the units until no further
