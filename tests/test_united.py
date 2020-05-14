@@ -59,3 +59,4 @@ def test_repr(numerator, denominator, expected):
 
 
 def test_mechanic_prio():
+    pass
