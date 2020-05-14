@@ -81,13 +81,19 @@ class Unit:
 
     priority_configuration = "default"
 
-    def __init__(self, numerators=[], denominators=[]):
+    def __init__(self, numerators=None, denominators=None):
         """Initializes the Unit class.
 
         Args:
             numerators (list): List of units which should be numerators.
             denominators (list): List of units which should be denominators.
         """
+        if numerators is None:
+            numerators = []
+
+        if denominators is None:
+            denominators = []
+
         self.numerators = []
         self.denominators = []
         self.repr = None
@@ -130,9 +136,9 @@ class Unit:
         while found:
             found = False
             for conversion in look_up_table:
-                if all([True if tmp_numerators.count(j) >= conversion.numerators.count(j) else False for j in
+                if all([True if self.reduced_numerators.count(j) >= conversion.numerators.count(j) else False for j in
                         conversion.numerators]) and \
-                        all([True if tmp_denominators.count(j) >= conversion.denominators.count(j) else False for j in
+                        all([True if self.reduced_denominators.count(j) >= conversion.denominators.count(j) else False for j in
                              conversion.denominators]):
                     for j in conversion.numerators:
                         tmp_numerators.remove(j)
