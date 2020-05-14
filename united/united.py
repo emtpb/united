@@ -3,9 +3,9 @@ from dataclasses import dataclass
 
 
 class NamedUnit:
-    def __init__(self, unit, symbol=None):
+    def __init__(self, unit, quantity=None):
         self.unit = unit
-        self.symbol = symbol
+        self.quantity = quantity
 
     def __repr__(self):
         return self.unit
@@ -125,8 +125,8 @@ class Unit:
                 self.denominators.remove(numerator)
                 self.numerators.remove(numerator)
 
-        tmp_numerators = copy.copy(self.numerators)
-        tmp_denominators = copy.copy(self.denominators)
+        self.reduced_numerators = copy.copy(self.numerators)
+        self.reduced_denominators = copy.copy(self.denominators)
         string_numerators = ""
         string_denominators = ""
 
@@ -141,33 +141,33 @@ class Unit:
                         all([True if self.reduced_denominators.count(j) >= conversion.denominators.count(j) else False for j in
                              conversion.denominators]):
                     for j in conversion.numerators:
-                        tmp_numerators.remove(j)
+                        self.reduced_numerators.remove(j)
                     for j in conversion.denominators:
-                        tmp_denominators.remove(j)
-                    tmp_numerators.append(conversion.result)
+                        self.reduced_denominators.remove(j)
+                    self.reduced_numerators.append(conversion.result)
                     found = True
                     break
 
-                elif all([True if tmp_numerators.count(j) >= conversion.denominators.count(j) else False for j in
+                elif all([True if self.reduced_numerators.count(j) >= conversion.denominators.count(j) else False for j in
                           conversion.denominators]) and \
-                        all([True if tmp_denominators.count(j) >= conversion.numerators.count(j) else False for j in
+                        all([True if self.reduced_denominators.count(j) >= conversion.numerators.count(j) else False for j in
                              conversion.numerators]) and conversion.reciprocal is True:
                     for j in conversion.numerators:
-                        tmp_denominators.remove(j)
+                        self.reduced_denominators.remove(j)
                     for j in conversion.denominators:
-                        tmp_numerators.remove(j)
-                    tmp_denominators.append(conversion.result)
+                        self.reduced_numerators.remove(j)
+                    self.reduced_denominators.append(conversion.result)
                     found = True
                     break
         # Convert the separate lists of numerators and denominators into a single string
-        for numerator in tmp_numerators:
+        for numerator in self.reduced_numerators:
             numerator = repr(numerator)
             if string_numerators:
                 string_numerators = string_numerators + "*" + numerator
             else:
                 string_numerators = numerator
 
-        for denominator in tmp_denominators:
+        for denominator in self.reduced_denominators:
             denominator = repr(denominator)
             if string_denominators:
                 string_denominators = string_denominators + "*" + denominator
