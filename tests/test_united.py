@@ -1,6 +1,7 @@
-"""Tests for `sipyunits` package."""
+"""Tests for `united` package."""
 import pytest
 from collections import Counter
+
 import united.united as ud
 
 
@@ -50,7 +51,8 @@ def test_dividing():
                          [(["s"], [], "s"), (["V", "A"], [], "W"), ([], ["V", "A"], "1/(W)"), (["V"], ["A"], "O"),
                           (["m", "m", "kg"], ["s", "s", "s", "A"], "V"),
                           ([], ["O"], "S"), ([], ["A", "s"], "1/(C)"), (["F"], ["C"], "1/(V)"),
-                          (["V", "s"], [], "(m*m*kg)/(s*C)")])
+                          (["V", "s"], [], "Wb"), (["m", "kg"], ["s", "s"], "N")])
 def test_repr(numerator, denominator, expected):
+    ud.priority_configuration = "electric"
     a = ud.Unit(numerator, denominator)
     assert repr(a) == expected

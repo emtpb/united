@@ -18,12 +18,19 @@ m = BaseUnit("m", "Length")
 K = BaseUnit("K", "Temperature")
 mol = BaseUnit("mol", "Amount of substance")
 cd = BaseUnit("cd", "Luminous intensity")
-O = BaseUnit("O", "Resistance")
+O = BaseUnit("Ω", "Resistance")
 V = BaseUnit("V", "Voltage")
 F = BaseUnit("F", "Capacitance")
 S = BaseUnit("S", "Conductance")
 W = BaseUnit("W", "Power")
 C = BaseUnit("C", "Electric charge")
+H = BaseUnit("H", "Electrical inductance")
+Wb = BaseUnit("Wb", "Magnetic flux")
+J = BaseUnit("J", "Energy")
+N = BaseUnit("N", "Force")
+T = BaseUnit("T", "Magnetic Induction")
+Pa = BaseUnit("Pa", "Pressure")
+
 
 si_base_units = {"s": s, "kg": kg, "A": A, "m": m, "K": K, "mol": mol, "cd": cd}
 
@@ -41,11 +48,32 @@ look_up_table = [Conversion((m, m, kg), (s, s, s, A, A), O),
                  Conversion((m, m, kg), (s, s, s, A), V),
                  Conversion((s, s, s, s, A, A), (m, m, kg), F),
                  Conversion((s, s, s, A, A), (m, m, kg), S),
+                 Conversion((m, m, kg), (s, s, A, A), H),
                  Conversion((m, m, kg), (s, s, s), W),
+                 Conversion((m, m, kg), (s, s, A), Wb),
+                 Conversion((m, m, kg), (s, s), J),
+                 Conversion(((m, kg), (s, s), N)),
+                 Conversion((kg,), (s, s, A), T),
+                 Conversion((kg,), (m, s, s), Pa),
                  Conversion((V,), (A,), O),
                  Conversion((V, A), (), W),
                  Conversion((), (O,), S, False),
+                 Conversion((N, m), (), J),
                  Conversion((A, s), (), C)]
+
+si_base_conversions = [x for x in look_up_table
+                       if set(x.numerators).issubset(si_base_units.values())
+                       and set(x.denominators).issubset(si_base_units.values())]
+
+default_priority = [x for x in range(len(look_up_table))]
+
+electric_priority = [0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 12, 14, 6, 8, 10, 13]
+
+mechanic_priority = [7, 8, 10, 14, 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 12, 14]
+
+priority_dict = {"default": default_priority, "electric": electric_priority, "mechanic": mechanic_priority}
+
+priority_configuration = "default"
 
 
 class Unit:
@@ -62,16 +90,13 @@ class Unit:
         """
         self.numerators = []
         self.denominators = []
-        # Extract list from lookup table which only contains entries which describe units by si-base-units
-        si_conversions = [x for x in look_up_table
-                          if set(x.numerators).issubset(si_base_units.values())
-                          and set(x.denominators).issubset(si_base_units.values())]
+        self.repr = None
         # Split given numerators into their si-base-units if needed
         for numerator in numerators:
             if numerator in [repr(x) for x in si_base_units.values()]:
                 self.numerators.append(si_base_units[numerator])
                 continue
-            for conversion in si_conversions:
+            for conversion in si_base_conversions:
                 if repr(conversion.result) == numerator:
                     self.numerators += conversion.numerators
                     self.denominators += conversion.denominators
@@ -82,7 +107,7 @@ class Unit:
                 self.denominators.append(si_base_units[denominator])
                 continue
 
-            for conversion in si_conversions:
+            for conversion in si_base_conversions:
                 if repr(conversion.result) == denominator:
                     self.numerators += conversion.denominators
                     self.denominators += conversion.numerators
@@ -93,6 +118,9 @@ class Unit:
             if numerator in self.denominators:
                 self.denominators.remove(numerator)
                 self.numerators.remove(numerator)
+        tmp_numerators = copy.copy(self.numerators)
+        tmp_denominators = copy.copy(self.denominators)
+        self.repr = find_units(tmp_numerators, tmp_denominators)
 
     def __mul__(self, other):
         result = Unit([repr(x) for x in self.numerators], [repr(x) for x in self.denominators])
@@ -117,10 +145,7 @@ class Unit:
         return self // other
 
     def __repr__(self):
-        tmp_numerators = copy.copy(self.numerators)
-        tmp_denominators = copy.copy(self.denominators)
-        return find_units(tmp_numerators, tmp_denominators)
-
+        return self.repr
 
 def find_units(numerators, denominators):
     """Iterates over the look_up_table and tries to find conversion for the units until no further
@@ -135,12 +160,12 @@ def find_units(numerators, denominators):
     """
     string_numerators = ""
     string_denominators = ""
-
+    new_look_up_table = [look_up_table[x] for x in priority_dict[priority_configuration]]
     found = True
     # Try to find conversion for the units
     while found:
         found = False
-        for conversion in look_up_table:
+        for conversion in new_look_up_table:
             if all([True if numerators.count(j) >= conversion.numerators.count(j) else False for j in
                     conversion.numerators]) and \
                     all([True if denominators.count(j) >= conversion.denominators.count(j) else False for j in
