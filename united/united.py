@@ -3,28 +3,27 @@ from dataclasses import dataclass
 
 
 class BaseUnit:
-    def __init__(self, unit, quantity, symbol=None):
+    def __init__(self, unit, symbol=None):
         self.unit = unit
-        self.quantity = quantity
         self.symbol = symbol
 
     def __repr__(self):
         return self.unit
 
 
-s = BaseUnit("s", "Time", "T")
-kg = BaseUnit("kg", "Mass", "m")
-A = BaseUnit("A", "Ampere", "I")
-m = BaseUnit("m", "Length", "l")
-K = BaseUnit("K", "Temperature", None)
-mol = BaseUnit("mol", "Amount of substance", "N")
-cd = BaseUnit("cd", "luminous intensity", "J")
-O = BaseUnit("O", "Resistance", "R")
-V = BaseUnit("V", "Voltage", "U")
-F = BaseUnit("F", "Capacitance", "C")
-S = BaseUnit("S", "Conductance", None)
-W = BaseUnit("W", "Power", "P")
-C = BaseUnit("C", "Electric charge", "Q")
+s = BaseUnit("s", "Time")
+kg = BaseUnit("kg", "Mass")
+A = BaseUnit("A", "Ampere")
+m = BaseUnit("m", "Length")
+K = BaseUnit("K", "Temperature")
+mol = BaseUnit("mol", "Amount of substance")
+cd = BaseUnit("cd", "Luminous intensity")
+O = BaseUnit("O", "Resistance")
+V = BaseUnit("V", "Voltage")
+F = BaseUnit("F", "Capacitance")
+S = BaseUnit("S", "Conductance")
+W = BaseUnit("W", "Power")
+C = BaseUnit("C", "Electric charge")
 
 si_base_units = {"s": s, "kg": kg, "A": A, "m": m, "K": K, "mol": mol, "cd": cd}
 
@@ -49,10 +48,11 @@ look_up_table = [Conversion((m, m, kg), (s, s, s, A, A), O),
                  Conversion((A, s), (), C)]
 
 
-class CustomUnit:
+class Unit:
     """Represents a Unit by storing the numerator and the denominators of the unit as Si-units.
     Supports arithmetic operations like multiplying and dividing with other :class:`.Unit` instances. When representing
     the unit an algorithm tries to find the best fitting unit out of the Si-units via a lookup table."""
+
     def __init__(self, numerators=[], denominators=[]):
         """Initializes the Unit class.
 
@@ -62,10 +62,11 @@ class CustomUnit:
         """
         self.numerators = []
         self.denominators = []
-        # Extract list from lookup table which only contains entries which describe units by si-units
+        # Extract list from lookup table which only contains entries which describe units by si-base-units
         si_conversions = [x for x in look_up_table
                           if set(x.numerators).issubset(si_base_units.values())
                           and set(x.denominators).issubset(si_base_units.values())]
+        # Split given numerators into their si-base-units if needed
         for numerator in numerators:
             if numerator in [repr(x) for x in si_base_units.values()]:
                 self.numerators.append(si_base_units[numerator])
@@ -75,7 +76,7 @@ class CustomUnit:
                     self.numerators += conversion.numerators
                     self.denominators += conversion.denominators
                     continue
-
+        # Split given denominators into their si-base-units if needed
         for denominator in denominators:
             if denominator in [repr(x) for x in si_base_units.values()]:
                 self.denominators.append(si_base_units[denominator])
@@ -87,18 +88,21 @@ class CustomUnit:
                     self.denominators += conversion.numerators
                     continue
         tmp = copy.copy(self.numerators)
+        # Reduce fraction
         for numerator in tmp:
             if numerator in self.denominators:
                 self.denominators.remove(numerator)
                 self.numerators.remove(numerator)
 
     def __mul__(self, other):
-        result = CustomUnit([repr(x) for x in self.numerators], [repr(x) for x in self.denominators])
+        result = Unit([repr(x) for x in self.numerators], [repr(x) for x in self.denominators])
+        # Add numerators of the other unit or reduce the fraction
         for numerator in other.numerators:
             if numerator in result.denominators:
                 result.denominators.remove(numerator)
             else:
                 result.numerators.append(numerator)
+        # Add denominators of the other unit or reduce the fraction
         for denominator in other.denominators:
             if denominator in result.numerators:
                 result.numerators.remove(denominator)
@@ -107,7 +111,7 @@ class CustomUnit:
         return result
 
     def __floordiv__(self, other):
-        return self * CustomUnit([repr(x) for x in other.denominators], [repr(x) for x in other.numerators])
+        return self * Unit([repr(x) for x in other.denominators], [repr(x) for x in other.numerators])
 
     def __truediv__(self, other):
         return self // other
@@ -115,18 +119,32 @@ class CustomUnit:
     def __repr__(self):
         tmp_numerators = copy.copy(self.numerators)
         tmp_denominators = copy.copy(self.denominators)
-        result_numerators = ""
-        result_denominators = ""
-        return find_units(result_numerators, result_denominators, tmp_numerators, tmp_denominators)
+        return find_units(tmp_numerators, tmp_denominators)
 
 
-def find_units(string_numerators, string_denominators, numerators, denominators):
+def find_units(numerators, denominators):
+    """Iterates over the look_up_table and tries to find conversion for the units until no further
+    conversion is possible and returns a string representation.
+
+    Args:
+        numerators (list): List of the given numerators as si-base-units.
+        denominators (list): List of the given denominators as si-based-units.
+
+    Returns:
+        str: Representation of the unit.
+    """
+    string_numerators = ""
+    string_denominators = ""
+
     found = True
+    # Try to find conversion for the units
     while found:
         found = False
         for conversion in look_up_table:
-            if all([True if numerators.count(j) >= conversion.numerators.count(j) else False for j in conversion.numerators]) and \
-                    all([True if denominators.count(j) >= conversion.denominators.count(j) else False for j in conversion.denominators]):
+            if all([True if numerators.count(j) >= conversion.numerators.count(j) else False for j in
+                    conversion.numerators]) and \
+                    all([True if denominators.count(j) >= conversion.denominators.count(j) else False for j in
+                         conversion.denominators]):
                 for j in conversion.numerators:
                     numerators.remove(j)
                 for j in conversion.denominators:
@@ -135,8 +153,10 @@ def find_units(string_numerators, string_denominators, numerators, denominators)
                 found = True
                 break
 
-            elif all([True if numerators.count(j) >= conversion.denominators.count(j) else False for j in conversion.denominators]) and \
-                    all([True if denominators.count(j) >= conversion.numerators.count(j) else False for j in conversion.numerators]) and conversion.reciprocal is True:
+            elif all([True if numerators.count(j) >= conversion.denominators.count(j) else False for j in
+                      conversion.denominators]) and \
+                    all([True if denominators.count(j) >= conversion.numerators.count(j) else False for j in
+                         conversion.numerators]) and conversion.reciprocal is True:
                 for j in conversion.numerators:
                     denominators.remove(j)
                 for j in conversion.denominators:
@@ -144,7 +164,7 @@ def find_units(string_numerators, string_denominators, numerators, denominators)
                 denominators.append(conversion.result)
                 found = True
                 break
-
+    # Convert the separate lists of numerators and denominators into a single string
     for numerator in numerators:
         numerator = repr(numerator)
         if string_numerators:
