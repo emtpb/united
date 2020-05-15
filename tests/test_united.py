@@ -58,5 +58,14 @@ def test_repr(numerator, denominator, expected):
     assert repr(a) == expected
 
 
+def test_quantity_property():
+    a = ud.Unit(["V"])
+    assert a.quantity == "Voltage"
+    b = ud.Unit(["V"], ["A"])
+    assert b.quantity == "Resistance"
+    c = a*b
+    assert c.quantity == "Unknown"
+
+
 def test_mechanic_prio():
     pass

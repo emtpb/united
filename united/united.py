@@ -1,6 +1,11 @@
 import copy
 from dataclasses import dataclass
 
+# Fix multiplying by not copying the original Unit
+# Fix edge cases for repr
+# Test and ajust priorities
+# Add Pow
+# Add adding and subtracting
 
 class NamedUnit:
     def __init__(self, unit, quantity=None):
@@ -182,20 +187,21 @@ class Unit:
             self.repr = "(" + string_numerators + ")/(" + string_denominators + ")"
 
     def __mul__(self, other):
-        result = Unit([repr(x) for x in self.numerators], [repr(x) for x in self.denominators])
+        result_numerators = copy.copy(self.numerators)
+        result_denominators = copy.copy(self.denominators)
         # Add numerators of the other unit or reduce the fraction
         for numerator in other.numerators:
-            if numerator in result.denominators:
-                result.denominators.remove(numerator)
+            if numerator in result_denominators:
+                result_denominators.remove(numerator)
             else:
-                result.numerators.append(numerator)
+                result_numerators.append(numerator)
         # Add denominators of the other unit or reduce the fraction
         for denominator in other.denominators:
-            if denominator in result.numerators:
-                result.numerators.remove(denominator)
+            if denominator in result_numerators:
+                result_numerators.remove(denominator)
             else:
-                result.denominators.append(denominator)
-        return result
+                result_denominators.append(denominator)
+        return Unit([repr(x) for x in result_numerators], [repr(x) for x in result_denominators])
 
     def __floordiv__(self, other):
         return self * Unit([repr(x) for x in other.denominators], [repr(x) for x in other.numerators])
@@ -205,3 +211,10 @@ class Unit:
 
     def __repr__(self):
         return self.repr
+
+    @property
+    def quantity(self):
+        if len(self.reduced_numerators) == 1 and not self.reduced_denominators:
+            return self.reduced_numerators[0].quantity
+        else:
+            return "Unknown"
