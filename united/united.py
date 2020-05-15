@@ -1,5 +1,6 @@
 import copy
 from dataclasses import dataclass
+from collections import Counter
 
 
 # Test and ajust priorities
@@ -217,6 +218,16 @@ class Unit:
 
     def __truediv__(self, other):
         return self // other
+
+    def __add__(self, other):
+        if Counter(self.numerators) == Counter(other.numerators) and \
+           Counter(self.denominators) == Counter(other.denominators):
+            return copy.copy(self)
+        else:
+            raise ValueError("Cannot add unequal units")
+
+    def __sub__(self, other):
+        return self + other
 
     def __repr__(self):
         return self.repr

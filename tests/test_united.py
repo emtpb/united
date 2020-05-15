@@ -47,6 +47,42 @@ def test_dividing():
     assert Counter(d.denominators) == Counter([ud.s, ud.s, ud.s, ud.s, ud.A])
 
 
+def test_add():
+    a = ud.Unit(["s"])
+    b = ud.Unit(["s"])
+    c = a + b
+    assert Counter(c.numerators) == Counter([ud.s])
+    assert c.denominators == []
+    d = ud.Unit(["V", "s"], ["cd", "C"])
+    e = ud.Unit(["s", "V"], ["C"])
+    f = ud.Unit(["cd"])
+    g = d + e / f
+    assert Counter(g.numerators) == Counter([ud.m, ud.m, ud.kg])
+    assert Counter(g.denominators) == Counter([ud.s, ud.s, ud.s, ud.A, ud.cd, ud.A])
+    with pytest.raises(ValueError):
+        h = a + f
+    with pytest.raises(ValueError):
+        i = e + d
+
+
+def test_sub():
+    a = ud.Unit(["s"])
+    b = ud.Unit(["s"])
+    c = a - b
+    assert Counter(c.numerators) == Counter([ud.s])
+    assert c.denominators == []
+    d = ud.Unit(["V", "s"], ["cd", "C"])
+    e = ud.Unit(["s", "V"], ["C"])
+    f = ud.Unit(["cd"])
+    g = d - e / f
+    assert Counter(g.numerators) == Counter([ud.m, ud.m, ud.kg])
+    assert Counter(g.denominators) == Counter([ud.s, ud.s, ud.s, ud.A, ud.cd, ud.A])
+    with pytest.raises(ValueError):
+        h = a - f
+    with pytest.raises(ValueError):
+        i = e - d
+
+
 @pytest.mark.parametrize("numerator, denominator, expected",
                          [(["s"], [], "s"), (["V", "A"], [], "W"), ([], ["V", "A"], "1/W"), (["V"], ["A"], "Ω"),
                           (["m", "m", "kg"], ["s", "s", "s", "A"], "V"),
