@@ -1,11 +1,11 @@
 import copy
 from dataclasses import dataclass
 
-# Fix multiplying by not copying the original Unit
-# Fix edge cases for repr
+
 # Test and ajust priorities
 # Add Pow
 # Add adding and subtracting
+
 
 class NamedUnit:
     def __init__(self, unit, quantity=None):
@@ -178,13 +178,22 @@ class Unit:
                 string_denominators = string_denominators + "*" + denominator
             else:
                 string_denominators = denominator
-
-        if string_numerators and not string_denominators:
+        if not string_numerators and not string_denominators:
+            self.repr = "1"
+        elif string_numerators and not string_denominators:
             self.repr = string_numerators
         elif string_denominators and not string_numerators:
-            self.repr = "1/(" + string_denominators + ")"
+            if "*" in string_denominators:
+                self.repr = "1/(" + string_denominators + ")"
+            else:
+                self.repr = "1/" + string_denominators
         else:
-            self.repr = "(" + string_numerators + ")/(" + string_denominators + ")"
+            if "*" in string_numerators:
+                string_numerators = "(" + string_numerators + ")"
+            if "*" in string_denominators:
+                string_denominators = "(" + string_denominators + ")"
+
+            self.repr = string_numerators + "/" + string_denominators
 
     def __mul__(self, other):
         result_numerators = copy.copy(self.numerators)

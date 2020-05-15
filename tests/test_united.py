@@ -48,10 +48,11 @@ def test_dividing():
 
 
 @pytest.mark.parametrize("numerator, denominator, expected",
-                         [(["s"], [], "s"), (["V", "A"], [], "W"), ([], ["V", "A"], "1/(W)"), (["V"], ["A"], "Ω"),
+                         [(["s"], [], "s"), (["V", "A"], [], "W"), ([], ["V", "A"], "1/W"), (["V"], ["A"], "Ω"),
                           (["m", "m", "kg"], ["s", "s", "s", "A"], "V"),
-                          ([], ["Ω"], "S"), ([], ["A", "s"], "1/(C)"), (["F"], ["C"], "1/(V)"),
-                          (["V", "s"], [], "Wb"), (["m", "kg"], ["s", "s"], "N")])
+                          ([], ["Ω"], "S"), ([], ["A", "s"], "1/C"), (["F"], ["C"], "1/V"),
+                          (["V", "s"], [], "Wb"), (["m", "kg"], ["s", "s"], "N"), ((), ("m", "kg"), "1/(m*kg)"),
+                          (("m", "kg"), ("s",), "(m*kg)/s"), (("m", "kg"), ("s", "cd"), "(m*kg)/(s*cd)")])
 def test_repr(numerator, denominator, expected):
     ud.priority_configuration = "default"
     a = ud.Unit(numerator, denominator)
