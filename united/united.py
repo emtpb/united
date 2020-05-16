@@ -1,43 +1,81 @@
 import copy
+from dataclasses import dataclass
+from collections import Counter
 
-si_base_units = ["s", "kg", "A", "m", "K", "mol", "cd"]
 
-S = "s"
-KG = "kg"
-A = "A"
-M = "m"
-K = "K"
-MOL = "mol"
-CD = "cd"
+# Test and ajust priorities
 
-look_up_table = [((M, M, KG), (S, S, S, A, A), "O"),
-                 ((M, M, KG), (S, S, S, A), "V"),
-                 ((S, S, S, S, A, A), (M, M, KG), "F"),
-                 ((S, S, S, A, A), (M, M, KG), "S"),
-                 ((M, M, KG), (S, S, A, A), "H"),
-                 ((M, M, KG), (S, S, S), "W"),
-                 ((M, M, KG), (S, S, A), "Wb"),
-                 ((M, M, KG), (S, S), "J"),
-                 ((M, KG), (S, S), "N"),
-                 ((KG,), (S, S, A), "T"),
-                 ((KG,), (M, S, S), "Pa"),
-                 (("V",), (A,), "O"),
-                 (("V", A), (), "W"),
-                 (("N", M), (), "J"),
-                 ((A, S), (), "C"),
-                 ]
-# Extract list from lookup table which only contains entries which describe units by si-units
-units_in_si = [x for x in look_up_table if set(x[0]).issubset(si_base_units) and set(x[1]).issubset(si_base_units)]
 
-default_priority = [x for x in range(len(look_up_table))]
+class NamedUnit:
+    def __init__(self, unit, quantity=None):
+        self.unit = unit
+        self.quantity = quantity
 
-electric_priority = [0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 12, 14, 6, 8, 10, 13]
+    def __repr__(self):
+        return self.unit
 
-mechanic_priority = [7, 8, 10, 14, 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 12, 14]
+
+s = NamedUnit("s", "Time")
+kg = NamedUnit("kg", "Mass")
+A = NamedUnit("A", "Ampere")
+m = NamedUnit("m", "Length")
+K = NamedUnit("K", "Temperature")
+mol = NamedUnit("mol", "Amount of substance")
+cd = NamedUnit("cd", "Luminous intensity")
+O = NamedUnit("Ω", "Resistance")
+V = NamedUnit("V", "Voltage")
+F = NamedUnit("F", "Capacitance")
+S = NamedUnit("S", "Conductance")
+W = NamedUnit("W", "Power")
+C = NamedUnit("C", "Electric charge")
+H = NamedUnit("H", "Electrical inductance")
+Wb = NamedUnit("Wb", "Magnetic flux")
+J = NamedUnit("J", "Energy")
+N = NamedUnit("N", "Force")
+T = NamedUnit("T", "Magnetic Induction")
+Pa = NamedUnit("Pa", "Pressure")
+
+
+si_base_units = {"s": s, "kg": kg, "A": A, "m": m, "K": K, "mol": mol, "cd": cd}
+
+
+@dataclass
+class Conversion:
+    """Class which stores information about a unit conversion"""
+    numerators: tuple
+    denominators: tuple
+    result: str
+    reciprocal: bool = True
+
+
+conversion_list = [Conversion((m, m, kg), (s, s, s, A, A), O),
+                   Conversion((m, m, kg), (s, s, s, A), V),
+                   Conversion((s, s, s, s, A, A), (m, m, kg), F),
+                   Conversion((s, s, s, A, A), (m, m, kg), S),
+                   Conversion((m, m, kg), (s, s, A, A), H),
+                   Conversion((m, m, kg), (s, s, s), W),
+                   Conversion((m, m, kg), (s, s, A), Wb),
+                   Conversion((m, m, kg), (s, s), J),
+                   Conversion((m, kg), (s, s), N),
+                   Conversion((kg,), (s, s, A), T),
+                   Conversion((kg,), (m, s, s), Pa),
+                   Conversion((V,), (A,), O),
+                   Conversion((V, A), (), W),
+                   Conversion((), (O,), S, False),
+                   Conversion((N, m), (), J),
+                   Conversion((A, s), (), C)]
+
+si_base_conversions = [x for x in conversion_list
+                       if set(x.numerators).issubset(si_base_units.values())
+                       and set(x.denominators).issubset(si_base_units.values())]
+
+default_priority = [x for x in range(len(conversion_list))]
+
+electric_priority = [0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 12, 14, 15, 6, 8, 10, 13]
+
+mechanic_priority = [7, 8, 10, 14, 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 12, 14, 15]
 
 priority_dict = {"default": default_priority, "electric": electric_priority, "mechanic": mechanic_priority}
-
-priority_configuration = "default"
 
 
 class Unit:
@@ -45,122 +83,192 @@ class Unit:
     Supports arithmetic operations like multiplying and dividing with other :class:`.Unit` instances. When representing
     the unit an algorithm tries to find the best fitting unit out of the Si-units via a lookup table."""
 
-    def __init__(self, numerators=[], denominators=[]):
+    priority_configuration = "default"
+
+    def __init__(self, numerators=None, denominators=None):
         """Initializes the Unit class.
 
         Args:
             numerators (list): List of units which should be numerators.
             denominators (list): List of units which should be denominators.
         """
+        if numerators is None:
+            numerators = []
+
+        if denominators is None:
+            denominators = []
 
         self.numerators = []
         self.denominators = []
         self.repr = None
-        # Search si representation of all given numerators and add them to the numerator list
+        # Split given numerators into their si-base-units if needed
         for numerator in numerators:
-            if numerator in si_base_units:
-                self.numerators.append(numerator)
+            if numerator in [repr(x) for x in si_base_units.values()]:
+                self.numerators.append(si_base_units[numerator])
                 continue
-            for i in units_in_si:
-                if i[2] == numerator:
-                    self.numerators += i[0]
-                    self.denominators += i[1]
+            for conversion in si_base_conversions:
+                if repr(conversion.result) == numerator:
+                    self.numerators += conversion.numerators
+                    self.denominators += conversion.denominators
                     continue
-        # Search si representation of all given denominators and add them to the denominator list
+        # Split given denominators into their si-base-units if needed
         for denominator in denominators:
-            if denominator in si_base_units:
-                self.denominators.append(denominator)
+            if denominator in [repr(x) for x in si_base_units.values()]:
+                self.denominators.append(si_base_units[denominator])
                 continue
 
-            for i in units_in_si:
-                if i[2] == denominator:
-                    self.numerators += i[1]
-                    self.denominators += i[0]
+            for conversion in si_base_conversions:
+                if repr(conversion.result) == denominator:
+                    self.numerators += conversion.denominators
+                    self.denominators += conversion.numerators
                     continue
         tmp = copy.copy(self.numerators)
+        # Reduce fraction
         for numerator in tmp:
             if numerator in self.denominators:
                 self.denominators.remove(numerator)
                 self.numerators.remove(numerator)
-        # Calculates the representation of the created unit
-        tmp_numerators = copy.copy(self.numerators)
-        tmp_denominators = copy.copy(self.denominators)
-        result_numerators = ""
-        result_denominators = ""
-        self.repr = find_units(result_numerators, result_denominators, tmp_numerators, tmp_denominators)
+
+        self.reduced_numerators = copy.copy(self.numerators)
+        self.reduced_denominators = copy.copy(self.denominators)
+        string_numerators = ""
+        string_denominators = ""
+
+        look_up_table = [conversion_list[x] for x in priority_dict[Unit.priority_configuration]]
+        found = True
+        # Try to find conversion for the units
+        while found:
+            found = False
+            for conversion in look_up_table:
+                if all([True if self.reduced_numerators.count(j) >= conversion.numerators.count(j) else False for j in
+                        conversion.numerators]) and \
+                        all([True if self.reduced_denominators.count(j) >= conversion.denominators.count(j) else False for j in
+                             conversion.denominators]):
+                    for j in conversion.numerators:
+                        self.reduced_numerators.remove(j)
+                    for j in conversion.denominators:
+                        self.reduced_denominators.remove(j)
+                    self.reduced_numerators.append(conversion.result)
+                    found = True
+                    break
+
+                elif all([True if self.reduced_numerators.count(j) >= conversion.denominators.count(j) else False for j in
+                          conversion.denominators]) and \
+                        all([True if self.reduced_denominators.count(j) >= conversion.numerators.count(j) else False for j in
+                             conversion.numerators]) and conversion.reciprocal is True:
+                    for j in conversion.numerators:
+                        self.reduced_denominators.remove(j)
+                    for j in conversion.denominators:
+                        self.reduced_numerators.remove(j)
+                    self.reduced_denominators.append(conversion.result)
+                    found = True
+                    break
+        # Convert the separate lists of numerators and denominators into a single string
+        for numerator in self.reduced_numerators:
+            numerator = repr(numerator)
+            if string_numerators:
+                string_numerators = string_numerators + "*" + numerator
+            else:
+                string_numerators = numerator
+
+        for denominator in self.reduced_denominators:
+            denominator = repr(denominator)
+            if string_denominators:
+                string_denominators = string_denominators + "*" + denominator
+            else:
+                string_denominators = denominator
+        if not string_numerators and not string_denominators:
+            self.repr = "1"
+        elif string_numerators and not string_denominators:
+            self.repr = string_numerators
+        elif string_denominators and not string_numerators:
+            if "*" in string_denominators:
+                self.repr = "1/(" + string_denominators + ")"
+            else:
+                self.repr = "1/" + string_denominators
+        else:
+            if "*" in string_numerators:
+                string_numerators = "(" + string_numerators + ")"
+            if "*" in string_denominators:
+                string_denominators = "(" + string_denominators + ")"
+
+            self.repr = string_numerators + "/" + string_denominators
 
     def __mul__(self, other):
-        result = Unit(copy.copy(self.numerators), copy.copy(self.denominators))
+        if isinstance(other, int):
+            if other == 1:
+                return copy.copy(self)
+            else:
+                raise TypeError("Unsupported operand for integer other than 1")
+        result_numerators = copy.copy(self.numerators)
+        result_denominators = copy.copy(self.denominators)
+        # Add numerators of the other unit or reduce the fraction
         for numerator in other.numerators:
-            if numerator in result.denominators:
-                result.denominators.remove(numerator)
+            if numerator in result_denominators:
+                result_denominators.remove(numerator)
             else:
-                result.numerators.append(numerator)
+                result_numerators.append(numerator)
+        # Add denominators of the other unit or reduce the fraction
         for denominator in other.denominators:
-            if denominator in result.numerators:
-                result.numerators.remove(denominator)
+            if denominator in result_numerators:
+                result_numerators.remove(denominator)
             else:
-                result.denominators.append(denominator)
-        return result
+                result_denominators.append(denominator)
+        return Unit([repr(x) for x in result_numerators], [repr(x) for x in result_denominators])
+
+    __rmul__ = __mul__
 
     def __floordiv__(self, other):
-        return self * Unit(other.denominators, other.numerators)
+        if isinstance(other, int):
+            if other == 1:
+                return copy.copy(self)
+            raise TypeError("Unsupported operand for integer other than 1")
+        return self * Unit([repr(x) for x in other.denominators], [repr(x) for x in other.numerators])
 
-    def __truediv__(self, other):
-        return self // other
+    def __rfloordiv__(self, other):
+        if isinstance(other, int):
+            if other == 1:
+                return Unit([repr(x) for x in self.denominators], [repr(x) for x in self.numerators])
+            raise TypeError("Unsupported operand for integer other than 1")
+
+    __truediv__ = __floordiv__
+    __rtruediv__ = __rfloordiv__
+
+    def __add__(self, other):
+        if Counter(self.numerators) == Counter(other.numerators) and \
+           Counter(self.denominators) == Counter(other.denominators):
+            return copy.copy(self)
+        else:
+            raise ValueError("Cannot add unequal units")
+
+    def __sub__(self, other):
+        return self + other
+
+    def __pow__(self, power, modulo=None):
+        result = 1
+        if power == 0:
+            return result
+        tmp = copy.copy(self)
+        for i in range(abs(power)):
+            result = result * tmp
+        if power < 0:
+            result = 1/result
+        return result
+
+    def __eq__(self, other):
+        if Counter(self.numerators) == Counter(other.numerators) \
+                and Counter(self.denominators) == Counter(other.denominators):
+            return True
+        else:
+            return False
+
 
     def __repr__(self):
         return self.repr
 
-
-def find_units(string_numerators, string_denominators, numerators, denominators):
-    new_look_up_table = [look_up_table[x] for x in priority_dict[priority_configuration]]
-    changed = False
-    found = True
-    while found:
-        found = False
-        for i in new_look_up_table:
-            if all([True if numerators.count(j) >= i[0].count(j) else False for j in i[0]]) and \
-                    all([True if denominators.count(j) >= i[1].count(j) else False for j in i[1]]):
-
-                for j in i[0]:
-                    numerators.remove(j)
-                for j in i[1]:
-                    denominators.remove(j)
-                numerators.append(i[2])
-                found = True
-                changed = True
-                break
-
-            elif all([True if numerators.count(j) >= i[1].count(j) else False for j in i[1]]) and \
-                    all([True if denominators.count(j) >= i[0].count(j) else False for j in i[0]]):
-                for j in i[0]:
-                    denominators.remove(j)
-                for j in i[1]:
-                    numerators.remove(j)
-                denominators.append(i[2])
-                changed = True
-                found = True
-                break
-    if changed:
-        return find_units(string_numerators, string_denominators, numerators, denominators)
-    else:
-        for i in numerators:
-            if string_numerators:
-                string_numerators = string_numerators + "*" + i
-            else:
-                string_numerators = i
-
-        for i in denominators:
-            if string_denominators:
-                string_denominators = string_denominators + "*" + i
-            else:
-                string_denominators = i
-
-        if string_numerators and not string_denominators:
-            return string_numerators
-        elif string_denominators and not string_numerators:
-            return "1/(" + string_denominators + ")"
+    @property
+    def quantity(self):
+        if len(self.reduced_numerators) == 1 and not self.reduced_denominators:
+            return self.reduced_numerators[0].quantity
         else:
-            return "(" + string_numerators + ")/(" + string_denominators + ")"
-
+            return "Unknown"
