@@ -34,6 +34,12 @@ def test_multiplying():
     g = e * f
     assert Counter(g.numerators) == Counter([ud.s, ud.A])
     assert g.denominators == []
+    h = e * 1
+    assert Counter(h.numerators) == Counter([ud.m, ud.m, ud.kg])
+    assert Counter(h.denominators) == Counter([ud.s, ud.s, ud.s, ud.A])
+    i = e * 1
+    assert Counter(i.numerators) == Counter([ud.m, ud.m, ud.kg])
+    assert Counter(i.denominators) == Counter([ud.s, ud.s, ud.s, ud.A])
 
 
 def test_dividing():
@@ -45,6 +51,15 @@ def test_dividing():
     d = c / a
     assert Counter(d.numerators) == Counter([ud.m, ud.m, ud.kg])
     assert Counter(d.denominators) == Counter([ud.s, ud.s, ud.s, ud.s, ud.A])
+    e = a / 1
+    assert e.numerators == [ud.s]
+    assert e.denominators == []
+    f = 1 / a
+    assert f.numerators == []
+    assert f.denominators == [ud.s]
+    g = 1 // c
+    assert Counter(g.numerators) == Counter([ud.s, ud.s, ud.s, ud.A])
+    assert Counter(g.denominators) == Counter([ud.m, ud.m, ud.kg])
 
 
 def test_add():

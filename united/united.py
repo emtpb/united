@@ -197,6 +197,11 @@ class Unit:
             self.repr = string_numerators + "/" + string_denominators
 
     def __mul__(self, other):
+        if isinstance(other, int):
+            if other == 1:
+                return copy.copy(self)
+            else:
+                raise TypeError("Unsupported operand for integer other than 1")
         result_numerators = copy.copy(self.numerators)
         result_denominators = copy.copy(self.denominators)
         # Add numerators of the other unit or reduce the fraction
@@ -213,11 +218,23 @@ class Unit:
                 result_denominators.append(denominator)
         return Unit([repr(x) for x in result_numerators], [repr(x) for x in result_denominators])
 
+    __rmul__ = __mul__
+
     def __floordiv__(self, other):
+        if isinstance(other, int):
+            if other == 1:
+                return copy.copy(self)
+            raise TypeError("Unsupported operand for integer other than 1")
         return self * Unit([repr(x) for x in other.denominators], [repr(x) for x in other.numerators])
 
-    def __truediv__(self, other):
-        return self // other
+    def __rfloordiv__(self, other):
+        if isinstance(other, int):
+            if other == 1:
+                return Unit([repr(x) for x in self.denominators], [repr(x) for x in self.numerators])
+            raise TypeError("Unsupported operand for integer other than 1")
+
+    __truediv__ = __floordiv__
+    __rtruediv__ = __rfloordiv__
 
     def __add__(self, other):
         if Counter(self.numerators) == Counter(other.numerators) and \
@@ -230,11 +247,11 @@ class Unit:
         return self + other
 
     def __pow__(self, power, modulo=None):
+        result = 1
         if power == 0:
-            return 1
-        result = copy.copy(self)
+            return result
         tmp = copy.copy(self)
-        for i in range(abs(power)-1):
+        for i in range(abs(power)):
             result = result * tmp
         if power < 0:
             result = 1/result
