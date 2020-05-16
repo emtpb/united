@@ -105,7 +105,7 @@ def test_pow():
     c = a**1
     assert c.numerators == [ud.s]
     d = a**3
-    assert d.numerators == [ud.s,ud.s,ud.s]
+    assert d.numerators == [ud.s, ud.s, ud.s]
     e = a**-2
     assert e.denominators == [ud.s, ud.s]
     assert e.numerators == []
@@ -113,6 +113,15 @@ def test_pow():
     g = f**2
     assert Counter(g.numerators) == Counter([ud.A, ud.A, ud.s, ud.s])
     assert Counter(g.denominators) == Counter([ud.m, ud.m])
+
+
+def test_eq():
+    a = ud.Unit(["V"])
+    assert a == a
+    b = ud.Unit(["V"])
+    assert a == b
+    c = ud.Unit(["m", "m", "kg"])
+    assert not a == c
 
 
 @pytest.mark.parametrize("numerator, denominator, expected",

@@ -4,8 +4,6 @@ from collections import Counter
 
 
 # Test and ajust priorities
-# Add Pow
-# Add adding and subtracting
 
 
 class NamedUnit:
@@ -256,6 +254,14 @@ class Unit:
         if power < 0:
             result = 1/result
         return result
+
+    def __eq__(self, other):
+        if Counter(self.numerators) == Counter(other.numerators) \
+                and Counter(self.denominators) == Counter(other.denominators):
+            return True
+        else:
+            return False
+
 
     def __repr__(self):
         return self.repr
