@@ -3,10 +3,10 @@ from dataclasses import dataclass
 from collections import Counter
 
 
+@dataclass
 class NamedUnit:
-    def __init__(self, unit, quantity=None):
-        self.unit = unit
-        self.quantity = quantity
+    unit: str
+    quantity: str
 
     def __repr__(self):
         return self.unit
