@@ -5,6 +5,7 @@ from collections import Counter
 
 @dataclass
 class NamedUnit:
+    """Class for known SI-units with their unit symbol and the quantity name."""
     unit: str
     quantity: str
 
@@ -266,6 +267,7 @@ class Unit:
 
     @property
     def quantity(self):
+        """Returns the quantity of the unit if it is a known SI-unit."""
         if len(self.reduced_numerators) == 1 and not self.reduced_denominators:
             return self.reduced_numerators[0].quantity
         else:
