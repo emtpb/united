@@ -83,6 +83,23 @@ def test_sub():
         i = e - d
 
 
+def test_pow():
+    a = ud.Unit(["s"])
+    b = a**0
+    assert b == 1
+    c = a**1
+    assert c.numerators == [ud.s]
+    d = a**3
+    assert d.numerators == [ud.s,ud.s,ud.s]
+    e = a**-2
+    assert e.denominators == [ud.s, ud.s]
+    assert e.numerators == []
+    f = ud.Unit(["C"], ["m"])
+    g = f**2
+    assert Counter(g.numerators) == Counter([ud.A, ud.A, ud.s, ud.s])
+    assert Counter(g.denominators) == Counter([ud.m, ud.m])
+
+
 @pytest.mark.parametrize("numerator, denominator, expected",
                          [(["s"], [], "s"), (["V", "A"], [], "W"), ([], ["V", "A"], "1/W"), (["V"], ["A"], "Ω"),
                           (["m", "m", "kg"], ["s", "s", "s", "A"], "V"),

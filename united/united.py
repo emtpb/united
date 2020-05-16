@@ -229,6 +229,17 @@ class Unit:
     def __sub__(self, other):
         return self + other
 
+    def __pow__(self, power, modulo=None):
+        if power == 0:
+            return 1
+        result = copy.copy(self)
+        tmp = copy.copy(self)
+        for i in range(abs(power)-1):
+            result = result * tmp
+        if power < 0:
+            result = 1/result
+        return result
+
     def __repr__(self):
         return self.repr
 
