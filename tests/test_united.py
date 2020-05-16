@@ -131,7 +131,7 @@ def test_eq():
                           (["V", "s"], [], "Wb"), (["m", "kg"], ["s", "s"], "N"), ((), ("m", "kg"), "1/(m*kg)"),
                           (("m", "kg"), ("s",), "(m*kg)/s"), (("m", "kg"), ("s", "cd"), "(m*kg)/(s*cd)")])
 def test_repr(numerator, denominator, expected):
-    ud.priority_configuration = "default"
+    ud.Unit.priority_configuration = "default"
     a = ud.Unit(numerator, denominator)
     assert repr(a) == expected
 
@@ -145,5 +145,9 @@ def test_quantity_property():
     assert c.quantity == "Unknown"
 
 
-def test_mechanic_prio():
-    pass
+@pytest.mark.parametrize("numerator, denominator, expected",
+                         [(["m", "m", "kg"], ["s", "s"], "J"), (["V"], [], "J/C")])
+def test_mechanic_prio(numerator, denominator, expected):
+    ud.Unit.priority_configuration = "mechanic"
+    a = ud.Unit(numerator, denominator)
+    assert repr(a) == expected
