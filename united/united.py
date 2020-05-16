@@ -3,9 +3,6 @@ from dataclasses import dataclass
 from collections import Counter
 
 
-# Test and ajust priorities
-
-
 class NamedUnit:
     def __init__(self, unit, quantity=None):
         self.unit = unit
@@ -34,7 +31,6 @@ J = NamedUnit("J", "Energy")
 N = NamedUnit("N", "Force")
 T = NamedUnit("T", "Magnetic Induction")
 Pa = NamedUnit("Pa", "Pressure")
-
 
 si_base_units = {"s": s, "kg": kg, "A": A, "m": m, "K": K, "mol": mol, "cd": cd}
 
@@ -142,7 +138,8 @@ class Unit:
             for conversion in look_up_table:
                 if all([True if self.reduced_numerators.count(j) >= conversion.numerators.count(j) else False for j in
                         conversion.numerators]) and \
-                        all([True if self.reduced_denominators.count(j) >= conversion.denominators.count(j) else False for j in
+                        all([True if self.reduced_denominators.count(j) >= conversion.denominators.count(j) else False
+                             for j in
                              conversion.denominators]):
                     for j in conversion.numerators:
                         self.reduced_numerators.remove(j)
@@ -152,9 +149,11 @@ class Unit:
                     found = True
                     break
 
-                elif all([True if self.reduced_numerators.count(j) >= conversion.denominators.count(j) else False for j in
+                elif all([True if self.reduced_numerators.count(j) >= conversion.denominators.count(j) else False for j
+                          in
                           conversion.denominators]) and \
-                        all([True if self.reduced_denominators.count(j) >= conversion.numerators.count(j) else False for j in
+                        all([True if self.reduced_denominators.count(j) >= conversion.numerators.count(j) else False for
+                             j in
                              conversion.numerators]) and conversion.reciprocal is True:
                     for j in conversion.numerators:
                         self.reduced_denominators.remove(j)
@@ -236,7 +235,7 @@ class Unit:
 
     def __add__(self, other):
         if Counter(self.numerators) == Counter(other.numerators) and \
-           Counter(self.denominators) == Counter(other.denominators):
+                Counter(self.denominators) == Counter(other.denominators):
             return copy.copy(self)
         else:
             raise ValueError("Cannot add unequal units")
@@ -252,7 +251,7 @@ class Unit:
         for i in range(abs(power)):
             result = result * tmp
         if power < 0:
-            result = 1/result
+            result = 1 / result
         return result
 
     def __eq__(self, other):
@@ -261,7 +260,6 @@ class Unit:
             return True
         else:
             return False
-
 
     def __repr__(self):
         return self.repr
