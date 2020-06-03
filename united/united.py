@@ -3,11 +3,11 @@ from dataclasses import dataclass
 from collections import Counter
 
 
-@dataclass
 class NamedUnit:
     """Class for known SI-units with their unit symbol and the quantity name."""
-    unit: str
-    quantity: str
+    def __init__(self, unit, quantity):
+        self.unit = unit
+        self.quantity = quantity
 
     def __repr__(self):
         return self.unit
