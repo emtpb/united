@@ -5,6 +5,7 @@ from collections import Counter
 
 class NamedUnit:
     """Class for known SI-units with their unit symbol and the quantity name."""
+
     def __init__(self, unit, quantity):
         self.unit = unit
         self.quantity = quantity
@@ -139,9 +140,11 @@ class Unit:
             while found:
                 found = False
                 for conversion in look_up_table:
-                    if all([True if self.reduced_numerators.count(j) >= conversion.numerators.count(j) else False for j in
+                    if all([True if self.reduced_numerators.count(j) >= conversion.numerators.count(j) else False for j
+                            in
                             conversion.numerators]) and \
-                            all([True if self.reduced_denominators.count(j) >= conversion.denominators.count(j) else False
+                            all([True if self.reduced_denominators.count(j) >= conversion.denominators.count(
+                                j) else False
                                  for j in
                                  conversion.denominators]):
                         for j in conversion.numerators:
@@ -152,10 +155,13 @@ class Unit:
                         found = True
                         break
 
-                    elif all([True if self.reduced_numerators.count(j) >= conversion.denominators.count(j) else False for j
-                              in
-                              conversion.denominators]) and \
-                            all([True if self.reduced_denominators.count(j) >= conversion.numerators.count(j) else False for
+                    elif all(
+                            [True if self.reduced_numerators.count(j) >= conversion.denominators.count(j) else False for
+                             j
+                             in
+                             conversion.denominators]) and \
+                            all([True if self.reduced_denominators.count(j) >= conversion.numerators.count(j) else False
+                                 for
                                  j in
                                  conversion.numerators]) and conversion.reciprocal is True:
                         for j in conversion.numerators:
@@ -251,6 +257,12 @@ class Unit:
 
 
 def convert_fraction_to_string(numerators, denominators):
+    """Converts numerators and denominators into a singel fraction string.
+
+    Args:
+        numerators(list): List of units as the numerators. Can be unit objects or strings.
+        denominators(list): List of units as the denominators. Can be unit objects or strings.
+    """
     string_numerators = ""
     string_denominators = ""
     for numerator in numerators:
