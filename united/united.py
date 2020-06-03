@@ -82,12 +82,15 @@ class Unit:
 
     priority_configuration = "default"
 
-    def __init__(self, numerators=None, denominators=None):
+    def __init__(self, numerators=None, denominators=None, fix_repr=False):
         """Initializes the Unit class.
 
         Args:
             numerators (list): List of units which should be numerators.
             denominators (list): List of units which should be denominators.
+            fix_repr (bool): When set to True the repr of the unit will be the exact same as given by parameters
+                             numerators and denominators. This means there will be no resolving of the unit via
+                             the conversion list.
         """
         if numerators is None:
             numerators = []
@@ -126,73 +129,46 @@ class Unit:
                 self.denominators.remove(numerator)
                 self.numerators.remove(numerator)
 
-        self.reduced_numerators = copy.copy(self.numerators)
-        self.reduced_denominators = copy.copy(self.denominators)
-        string_numerators = ""
-        string_denominators = ""
+        if fix_repr is False:
+            self.reduced_numerators = copy.copy(self.numerators)
+            self.reduced_denominators = copy.copy(self.denominators)
 
-        look_up_table = [conversion_list[x] for x in priority_dict[Unit.priority_configuration]]
-        found = True
-        # Try to find conversion for the units
-        while found:
-            found = False
-            for conversion in look_up_table:
-                if all([True if self.reduced_numerators.count(j) >= conversion.numerators.count(j) else False for j in
-                        conversion.numerators]) and \
-                        all([True if self.reduced_denominators.count(j) >= conversion.denominators.count(j) else False
-                             for j in
-                             conversion.denominators]):
-                    for j in conversion.numerators:
-                        self.reduced_numerators.remove(j)
-                    for j in conversion.denominators:
-                        self.reduced_denominators.remove(j)
-                    self.reduced_numerators.append(conversion.result)
-                    found = True
-                    break
+            look_up_table = [conversion_list[x] for x in priority_dict[Unit.priority_configuration]]
+            found = True
+            # Try to find conversion for the units
+            while found:
+                found = False
+                for conversion in look_up_table:
+                    if all([True if self.reduced_numerators.count(j) >= conversion.numerators.count(j) else False for j in
+                            conversion.numerators]) and \
+                            all([True if self.reduced_denominators.count(j) >= conversion.denominators.count(j) else False
+                                 for j in
+                                 conversion.denominators]):
+                        for j in conversion.numerators:
+                            self.reduced_numerators.remove(j)
+                        for j in conversion.denominators:
+                            self.reduced_denominators.remove(j)
+                        self.reduced_numerators.append(conversion.result)
+                        found = True
+                        break
 
-                elif all([True if self.reduced_numerators.count(j) >= conversion.denominators.count(j) else False for j
-                          in
-                          conversion.denominators]) and \
-                        all([True if self.reduced_denominators.count(j) >= conversion.numerators.count(j) else False for
-                             j in
-                             conversion.numerators]) and conversion.reciprocal is True:
-                    for j in conversion.numerators:
-                        self.reduced_denominators.remove(j)
-                    for j in conversion.denominators:
-                        self.reduced_numerators.remove(j)
-                    self.reduced_denominators.append(conversion.result)
-                    found = True
-                    break
-        # Convert the separate lists of numerators and denominators into a single string
-        for numerator in self.reduced_numerators:
-            numerator = repr(numerator)
-            if string_numerators:
-                string_numerators = string_numerators + "*" + numerator
-            else:
-                string_numerators = numerator
-
-        for denominator in self.reduced_denominators:
-            denominator = repr(denominator)
-            if string_denominators:
-                string_denominators = string_denominators + "*" + denominator
-            else:
-                string_denominators = denominator
-        if not string_numerators and not string_denominators:
-            self.repr = "1"
-        elif string_numerators and not string_denominators:
-            self.repr = string_numerators
-        elif string_denominators and not string_numerators:
-            if "*" in string_denominators:
-                self.repr = "1/(" + string_denominators + ")"
-            else:
-                self.repr = "1/" + string_denominators
+                    elif all([True if self.reduced_numerators.count(j) >= conversion.denominators.count(j) else False for j
+                              in
+                              conversion.denominators]) and \
+                            all([True if self.reduced_denominators.count(j) >= conversion.numerators.count(j) else False for
+                                 j in
+                                 conversion.numerators]) and conversion.reciprocal is True:
+                        for j in conversion.numerators:
+                            self.reduced_denominators.remove(j)
+                        for j in conversion.denominators:
+                            self.reduced_numerators.remove(j)
+                        self.reduced_denominators.append(conversion.result)
+                        found = True
+                        break
+            # Convert the separate lists of numerators and denominators into a single string
+            self.repr = convert_fraction_to_string(self.reduced_numerators, self.reduced_denominators)
         else:
-            if "*" in string_numerators:
-                string_numerators = "(" + string_numerators + ")"
-            if "*" in string_denominators:
-                string_denominators = "(" + string_denominators + ")"
-
-            self.repr = string_numerators + "/" + string_denominators
+            self.repr = convert_fraction_to_string(numerators, denominators)
 
     def __mul__(self, other):
         if isinstance(other, int):
@@ -272,3 +248,35 @@ class Unit:
             return self.reduced_numerators[0].quantity
         else:
             return "Unknown"
+
+
+def convert_fraction_to_string(numerators, denominators):
+    string_numerators = ""
+    string_denominators = ""
+    for numerator in numerators:
+        if string_numerators:
+            string_numerators = "{}*{}".format(string_numerators, numerator)
+        else:
+            string_numerators = "{}".format(numerator)
+
+    for denominator in denominators:
+        if string_denominators:
+            string_denominators = "{}*{}".format(string_denominators, denominator)
+        else:
+            string_denominators = "{}".format(denominator)
+    if not string_numerators and not string_denominators:
+        return "1"
+    elif string_numerators and not string_denominators:
+        return string_numerators
+    elif string_denominators and not string_numerators:
+        if "*" in string_denominators:
+            return "1/(" + string_denominators + ")"
+        else:
+            return "1/" + string_denominators
+    else:
+        if "*" in string_numerators:
+            string_numerators = "(" + string_numerators + ")"
+        if "*" in string_denominators:
+            string_denominators = "(" + string_denominators + ")"
+
+        return string_numerators + "/" + string_denominators

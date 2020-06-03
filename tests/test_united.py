@@ -151,3 +151,12 @@ def test_mechanic_prio(numerator, denominator, expected):
     ud.Unit.priority_configuration = "mechanic"
     a = ud.Unit(numerator, denominator)
     assert repr(a) == expected
+
+
+@pytest.mark.parametrize("numerator, denominator, expected",
+                         [(["s"], [], "s"), (["V", "A"], [], "V*A"), ([], ["V", "A"], "1/(V*A)"),
+                          (["V"], ["A"], "V/A")])
+def test_fix_repr(numerator, denominator, expected):
+    ud.Unit.priority_configuration = "default"
+    a = ud.Unit(numerator, denominator, fix_repr=True)
+    assert repr(a) == expected
