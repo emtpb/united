@@ -12,6 +12,8 @@ This project follows the guidelines of `Keep a changelog`_ and adheres to
 [Unreleased]
 ============
 
+[0.1.0] - 2020-06-03
+====================
 Added
 -----
-* Initial implementation (preview).
+* Initial implementation
