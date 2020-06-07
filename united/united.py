@@ -42,7 +42,7 @@ class Conversion:
     """Class which stores information about a unit conversion"""
     numerators: tuple
     denominators: tuple
-    result: str
+    result: NamedUnit
     reciprocal: bool = True
 
 
