@@ -21,7 +21,7 @@ m = NamedUnit("m", "Length")
 K = NamedUnit("K", "Temperature")
 mol = NamedUnit("mol", "Amount of substance")
 cd = NamedUnit("cd", "Luminous intensity")
-O = NamedUnit("Ω", "Resistance")
+Ohm = NamedUnit("Ω", "Resistance")
 V = NamedUnit("V", "Voltage")
 F = NamedUnit("F", "Capacitance")
 S = NamedUnit("S", "Conductance")
@@ -46,7 +46,7 @@ class Conversion:
     reciprocal: bool = True
 
 
-conversion_list = [Conversion((m, m, kg), (s, s, s, A, A), O),
+conversion_list = [Conversion((m, m, kg), (s, s, s, A, A), Ohm),
                    Conversion((m, m, kg), (s, s, s, A), V),
                    Conversion((s, s, s, s, A, A), (m, m, kg), F),
                    Conversion((s, s, s, A, A), (m, m, kg), S),
@@ -57,9 +57,9 @@ conversion_list = [Conversion((m, m, kg), (s, s, s, A, A), O),
                    Conversion((m, kg), (s, s), N),
                    Conversion((kg,), (s, s, A), T),
                    Conversion((kg,), (m, s, s), Pa),
-                   Conversion((V,), (A,), O),
+                   Conversion((V,), (A,), Ohm),
                    Conversion((V, A), (), W),
-                   Conversion((), (O,), S, False),
+                   Conversion((), (Ohm,), S, False),
                    Conversion((N, m), (), J),
                    Conversion((A, s), (), C)]
 
