@@ -2,10 +2,29 @@ import copy
 from dataclasses import dataclass
 from collections import Counter
 
+"""Module for converting SI units automatically.
+
+Attributes:
+    si_base_units (dict): Convert SI base unit string into the corresponding
+                          :class:`.NamedUnit`.
+    conversion_list: Holds all possible :class:`.Conversions` for SI units.
+    si_base_conversions (list): Extracted list from conversions_list which
+                                only holds conversion from SI base units to
+                                SI units.
+    default_priority (list): Contains the indexes for how the conversion_list
+                             should be sorted in default.
+    electric_priority (list): Contains the indexes for how the conversion_list
+                             should be sorted to prioritize electric units. 
+    mechanic_priority (list): Contains the indexes for how the conversion_list
+                             should be sorted to prioritize mechanic units.
+    priority_dict: Maps strings to the according priority list.                   
+"""
+
 
 class NamedUnit:
-    """Class for known SI-units with their unit symbol and the quantity name."""
-
+    """Class storing known SI units with their unit symbol and the quantity
+    name.
+    """
     def __init__(self, unit, quantity):
         self.unit = unit
         self.quantity = quantity
@@ -34,12 +53,13 @@ N = NamedUnit("N", "Force")
 T = NamedUnit("T", "Magnetic Induction")
 Pa = NamedUnit("Pa", "Pressure")
 
-si_base_units = {"s": s, "kg": kg, "A": A, "m": m, "K": K, "mol": mol, "cd": cd}
+si_base_units = {"s": s, "kg": kg, "A": A, "m": m, "K": K, "mol": mol,
+                 "cd": cd}
 
 
 @dataclass
 class Conversion:
-    """Class which stores information about a unit conversion"""
+    """Class to store information about a unit conversion."""
     numerators: tuple
     denominators: tuple
     result: NamedUnit
@@ -67,21 +87,25 @@ si_base_conversions = [x for x in conversion_list
                        if set(x.numerators).issubset(si_base_units.values())
                        and set(x.denominators).issubset(si_base_units.values())]
 
+
 default_priority = [x for x in range(len(conversion_list))]
 
 electric_priority = [0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 12, 14, 15, 6, 8, 10, 13]
 
 mechanic_priority = [7, 8, 10, 14, 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 12, 14, 15]
 
-priority_dict = {"default": default_priority, "electric": electric_priority, "mechanic": mechanic_priority}
+priority_dict = {"default": default_priority, "electric": electric_priority,
+                 "mechanic": mechanic_priority}
 
 
 class Unit:
-    """Represents a Unit by storing the numerator and the denominators of the unit as Si-units.
-    Supports arithmetic operations like multiplying and dividing with other :class:`.Unit` instances. When representing
-    the unit an algorithm tries to find the best fitting unit out of the Si-units via a lookup table."""
+    """Represents a Unit by storing the numerator and the denominators of the
+    unit as SI units. Supports arithmetic operations like multiplying and
+    dividing with other :class:`.Unit` instances. When representing the unit,
+    an algorithm tries to find the best fitting unit out of the SI units via
+    a lookup table."""
 
-    priority_configuration = "default"
+    conversion_priority = "default"
 
     def __init__(self, numerators=None, denominators=None, fix_repr=False):
         """Initializes the Unit class.
@@ -89,9 +113,10 @@ class Unit:
         Args:
             numerators (list): List of units which should be numerators.
             denominators (list): List of units which should be denominators.
-            fix_repr (bool): When set to True the repr of the unit will be the exact same as given by parameters
-                             numerators and denominators. This means there will be no resolving of the unit via
-                             the conversion list.
+            fix_repr (bool): When set to True the repr of the unit will be the
+                             exact same as given by parameters numerators and
+                             denominators. This means there will be no
+                             resolving of the unit via the conversion list.
         """
         if numerators is None:
             numerators = []
@@ -102,7 +127,7 @@ class Unit:
         self.numerators = []
         self.denominators = []
         self.repr = None
-        # Split given numerators into their si-base-units if needed
+        # Split given numerators into their SI base units if needed
         for numerator in numerators:
             if numerator in [repr(x) for x in si_base_units.values()]:
                 self.numerators.append(si_base_units[numerator])
@@ -112,7 +137,7 @@ class Unit:
                     self.numerators += conversion.numerators
                     self.denominators += conversion.denominators
                     continue
-        # Split given denominators into their si-base-units if needed
+        # Split given denominators into their SI base units if needed
         for denominator in denominators:
             if denominator in [repr(x) for x in si_base_units.values()]:
                 self.denominators.append(si_base_units[denominator])
@@ -134,19 +159,19 @@ class Unit:
             self.reduced_numerators = copy.copy(self.numerators)
             self.reduced_denominators = copy.copy(self.denominators)
 
-            look_up_table = [conversion_list[x] for x in priority_dict[Unit.priority_configuration]]
+            look_up_table = [conversion_list[x] for x in
+                             priority_dict[Unit.conversion_priority]]
             found = True
             # Try to find conversion for the units
             while found:
                 found = False
                 for conversion in look_up_table:
-                    if all([True if self.reduced_numerators.count(j) >= conversion.numerators.count(j) else False for j
-                            in
-                            conversion.numerators]) and \
-                            all([True if self.reduced_denominators.count(j) >= conversion.denominators.count(
-                                j) else False
-                                 for j in
-                                 conversion.denominators]):
+                    if all([True if self.reduced_numerators.count(
+                            j) >= conversion.numerators.count(j)
+                            else False for j in conversion.numerators]) and \
+                            all([True if self.reduced_denominators.count(
+                                j) >= conversion.denominators.count(j)
+                                 else False for j in conversion.denominators]):
                         for j in conversion.numerators:
                             self.reduced_numerators.remove(j)
                         for j in conversion.denominators:
@@ -156,14 +181,14 @@ class Unit:
                         break
 
                     elif all(
-                            [True if self.reduced_numerators.count(j) >= conversion.denominators.count(j) else False for
-                             j
-                             in
+                            [True if self.reduced_numerators.count(
+                                j) >= conversion.denominators.count(j)
+                             else False for j in
                              conversion.denominators]) and \
-                            all([True if self.reduced_denominators.count(j) >= conversion.numerators.count(j) else False
-                                 for
-                                 j in
-                                 conversion.numerators]) and conversion.reciprocal is True:
+                            all([True if self.reduced_denominators.count(
+                                j) >= conversion.numerators.count(j) else False
+                                 for j in conversion.numerators]) and \
+                            conversion.reciprocal is True:
                         for j in conversion.numerators:
                             self.reduced_denominators.remove(j)
                         for j in conversion.denominators:
@@ -171,8 +196,8 @@ class Unit:
                         self.reduced_denominators.append(conversion.result)
                         found = True
                         break
-            # Convert the separate lists of numerators and denominators into a single string
-            self.repr = convert_fraction_to_string(self.reduced_numerators, self.reduced_denominators)
+            self.repr = convert_fraction_to_string(self.reduced_numerators,
+                                                   self.reduced_denominators)
         else:
             self.repr = convert_fraction_to_string(numerators, denominators)
 
@@ -196,7 +221,8 @@ class Unit:
                 result_numerators.remove(denominator)
             else:
                 result_denominators.append(denominator)
-        return Unit([repr(x) for x in result_numerators], [repr(x) for x in result_denominators])
+        return Unit([repr(x) for x in result_numerators],
+                    [repr(x) for x in result_denominators])
 
     __rmul__ = __mul__
 
@@ -205,12 +231,14 @@ class Unit:
             if other == 1:
                 return copy.copy(self)
             raise TypeError("Unsupported operand for integer other than 1")
-        return self * Unit([repr(x) for x in other.denominators], [repr(x) for x in other.numerators])
+        return self * Unit([repr(x) for x in other.denominators],
+                           [repr(x) for x in other.numerators])
 
     def __rfloordiv__(self, other):
         if isinstance(other, int):
             if other == 1:
-                return Unit([repr(x) for x in self.denominators], [repr(x) for x in self.numerators])
+                return Unit([repr(x) for x in self.denominators],
+                            [repr(x) for x in self.numerators])
             raise TypeError("Unsupported operand for integer other than 1")
 
     __truediv__ = __floordiv__
@@ -249,7 +277,7 @@ class Unit:
 
     @property
     def quantity(self):
-        """Returns the quantity of the unit if it is a known SI-unit."""
+        """Returns the quantity of the unit if it is a known SI unit."""
         if len(self.reduced_numerators) == 1 and not self.reduced_denominators:
             return self.reduced_numerators[0].quantity
         else:
@@ -257,11 +285,13 @@ class Unit:
 
 
 def convert_fraction_to_string(numerators, denominators):
-    """Converts numerators and denominators into a singel fraction string.
+    """Converts numerators and denominators into a single fraction string.
 
     Args:
-        numerators(list): List of units as the numerators. Can be unit objects or strings.
-        denominators(list): List of units as the denominators. Can be unit objects or strings.
+        numerators(list): List of units as the numerators. Can be unit objects
+                          or strings.
+        denominators(list): List of units as the denominators. Can be unit
+                            objects or strings.
     """
     string_numerators = ""
     string_denominators = ""
@@ -273,7 +303,8 @@ def convert_fraction_to_string(numerators, denominators):
 
     for denominator in denominators:
         if string_denominators:
-            string_denominators = "{}*{}".format(string_denominators, denominator)
+            string_denominators = "{}*{}".format(string_denominators,
+                                                 denominator)
         else:
             string_denominators = "{}".format(denominator)
     if not string_numerators and not string_denominators:
