@@ -66,8 +66,8 @@ class Conversion:
     reciprocal: bool = True
 
 
-conversion_list = [Conversion((m, m, kg), (s, s, s, A, A), Ohm),
-                   Conversion((m, m, kg), (s, s, s, A), V),
+conversion_list = [Conversion((m, m, kg), (s, s, s, A), V),
+                   Conversion((m, m, kg), (s, s, s, A, A), Ohm),
                    Conversion((s, s, s, s, A, A), (m, m, kg), F),
                    Conversion((s, s, s, A, A), (m, m, kg), S),
                    Conversion((m, m, kg), (s, s, A, A), H),
@@ -81,7 +81,8 @@ conversion_list = [Conversion((m, m, kg), (s, s, s, A, A), Ohm),
                    Conversion((V, A), (), W),
                    Conversion((), (Ohm,), S, False),
                    Conversion((N, m), (), J),
-                   Conversion((A, s), (), C)]
+                   Conversion((A, s), (), C)
+                   ]
 
 si_base_conversions = [x for x in conversion_list
                        if set(x.numerators).issubset(si_base_units.values())
