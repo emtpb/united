@@ -118,6 +118,9 @@ class Unit:
                              denominators. This means there will be no
                              resolving of the unit via the conversion list.
         """
+        if priority_dict.get(self.conversion_priority) is None:
+            raise ValueError("Unknown priority '{}'".format(
+                self.conversion_priority))
         if numerators is None:
             numerators = []
 

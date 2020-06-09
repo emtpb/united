@@ -148,7 +148,7 @@ def test_quantity_property():
 @pytest.mark.parametrize("numerator, denominator, expected",
                          [(["m", "m", "kg"], ["s", "s"], "J"), (["V"], [], "J/C")])
 def test_mechanic_prio(numerator, denominator, expected):
-    ud.Unit.priority_configuration = "mechanic"
+    ud.Unit.conversion_priority = "mechanic"
     a = ud.Unit(numerator, denominator)
     assert repr(a) == expected
 
@@ -157,6 +157,14 @@ def test_mechanic_prio(numerator, denominator, expected):
                          [(["s"], [], "s"), (["V", "A"], [], "V*A"), ([], ["V", "A"], "1/(V*A)"),
                           (["V"], ["A"], "V/A")])
 def test_fix_repr(numerator, denominator, expected):
-    ud.Unit.priority_configuration = "default"
+    ud.Unit.conversion_priority = "default"
     a = ud.Unit(numerator, denominator, fix_repr=True)
     assert repr(a) == expected
+
+
+def test_conversion_priority():
+    ud.Unit.conversion_priority = "default"
+    ud.Unit("s")
+    ud.Unit.conversion_priority = "Test"
+    with pytest.raises(ValueError):
+        ud.Unit("s")
