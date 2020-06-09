@@ -73,7 +73,8 @@ def test_add():
     f = ud.Unit(["cd"])
     g = d + e / f
     assert Counter(g.numerators) == Counter([ud.m, ud.m, ud.kg])
-    assert Counter(g.denominators) == Counter([ud.s, ud.s, ud.s, ud.A, ud.cd, ud.A])
+    assert Counter(g.denominators) == Counter(
+        [ud.s, ud.s, ud.s, ud.A, ud.cd, ud.A])
     with pytest.raises(ValueError):
         h = a + f
     with pytest.raises(ValueError):
@@ -91,7 +92,8 @@ def test_sub():
     f = ud.Unit(["cd"])
     g = d - e / f
     assert Counter(g.numerators) == Counter([ud.m, ud.m, ud.kg])
-    assert Counter(g.denominators) == Counter([ud.s, ud.s, ud.s, ud.A, ud.cd, ud.A])
+    assert Counter(g.denominators) == Counter(
+        [ud.s, ud.s, ud.s, ud.A, ud.cd, ud.A])
     with pytest.raises(ValueError):
         h = a - f
     with pytest.raises(ValueError):
@@ -100,17 +102,17 @@ def test_sub():
 
 def test_pow():
     a = ud.Unit(["s"])
-    b = a**0
+    b = a ** 0
     assert b == 1
-    c = a**1
+    c = a ** 1
     assert c.numerators == [ud.s]
-    d = a**3
+    d = a ** 3
     assert d.numerators == [ud.s, ud.s, ud.s]
-    e = a**-2
+    e = a ** -2
     assert e.denominators == [ud.s, ud.s]
     assert e.numerators == []
     f = ud.Unit(["C"], ["m"])
-    g = f**2
+    g = f ** 2
     assert Counter(g.numerators) == Counter([ud.A, ud.A, ud.s, ud.s])
     assert Counter(g.denominators) == Counter([ud.m, ud.m])
 
@@ -125,11 +127,16 @@ def test_eq():
 
 
 @pytest.mark.parametrize("numerator, denominator, expected",
-                         [(["s"], [], "s"), (["V", "A"], [], "W"), ([], ["V", "A"], "1/W"), (["V"], ["A"], "Ω"),
+                         [(["s"], [], "s"), (["V", "A"], [], "W"),
+                          ([], ["V", "A"], "1/W"), (["V"], ["A"], "Ω"),
                           (["m", "m", "kg"], ["s", "s", "s", "A"], "V"),
-                          ([], ["Ω"], "S"), ([], ["A", "s"], "1/C"), (["F"], ["C"], "1/V"),
-                          (["V", "s"], [], "Wb"), (["m", "kg"], ["s", "s"], "N"), ((), ("m", "kg"), "1/(m*kg)"),
-                          (("m", "kg"), ("s",), "(m*kg)/s"), (("m", "kg"), ("s", "cd"), "(m*kg)/(s*cd)")])
+                          ([], ["Ω"], "S"), ([], ["A", "s"], "1/C"),
+                          (["F"], ["C"], "1/V"),
+                          (["V", "s"], [], "Wb"),
+                          (["m", "kg"], ["s", "s"], "N"),
+                          ((), ("m", "kg"), "1/(m*kg)"),
+                          (("m", "kg"), ("s",), "(m*kg)/s"),
+                          (("m", "kg"), ("s", "cd"), "(m*kg)/(s*cd)")])
 def test_repr(numerator, denominator, expected):
     ud.Unit.priority_configuration = "default"
     a = ud.Unit(numerator, denominator)
@@ -141,12 +148,13 @@ def test_quantity_property():
     assert a.quantity == "Voltage"
     b = ud.Unit(["V"], ["A"])
     assert b.quantity == "Resistance"
-    c = a*b
+    c = a * b
     assert c.quantity == "Unknown"
 
 
 @pytest.mark.parametrize("numerator, denominator, expected",
-                         [(["m", "m", "kg"], ["s", "s"], "J"), (["V"], [], "J/C")])
+                         [(["m", "m", "kg"], ["s", "s"], "J"),
+                          (["V"], [], "J/C")])
 def test_mechanic_prio(numerator, denominator, expected):
     ud.Unit.conversion_priority = "mechanic"
     a = ud.Unit(numerator, denominator)
@@ -154,7 +162,8 @@ def test_mechanic_prio(numerator, denominator, expected):
 
 
 @pytest.mark.parametrize("numerator, denominator, expected",
-                         [(["s"], [], "s"), (["V", "A"], [], "V*A"), ([], ["V", "A"], "1/(V*A)"),
+                         [(["s"], [], "s"), (["V", "A"], [], "V*A"),
+                          ([], ["V", "A"], "1/(V*A)"),
                           (["V"], ["A"], "V/A")])
 def test_fix_repr(numerator, denominator, expected):
     ud.Unit.conversion_priority = "default"
