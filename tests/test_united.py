@@ -149,7 +149,7 @@ def test_quantity_property():
     b = ud.Unit(["V"], ["A"])
     assert b.quantity == "Resistance"
     c = a * b
-    assert c.quantity == "Unknown"
+    assert c.quantity is None
 
 
 @pytest.mark.parametrize("numerator, denominator, expected",

@@ -284,8 +284,6 @@ class Unit:
         """Returns the quantity of the unit if it is a known SI unit."""
         if len(self.reduced_numerators) == 1 and not self.reduced_denominators:
             return self.reduced_numerators[0].quantity
-        else:
-            return "Unknown"
 
 
 def convert_fraction_to_string(numerators, denominators):
