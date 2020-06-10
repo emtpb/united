@@ -13,10 +13,12 @@ Attributes:
                                 SI units.
     default_priority (list): Contains the indexes for how the conversion_list
                              should be sorted in default.
-    electric_priority (list): Contains the indexes for how the conversion_list
-                             should be sorted to prioritize electric units. 
-    mechanic_priority (list): Contains the indexes for how the conversion_list
-                             should be sorted to prioritize mechanic units.
+    electrical_priority (list): Contains the indexes for how the 
+                                conversion_list should be sorted to prioritize 
+                                electrical units. 
+    mechanical_priority (list): Contains the indexes for how the 
+                                conversion_list should be sorted to prioritize 
+                                mechanical units.
     priority_dict: Maps strings to the according priority list.                   
 """
 
@@ -91,12 +93,13 @@ si_base_conversions = [x for x in conversion_list
 
 default_priority = [x for x in range(len(conversion_list))]
 
-electric_priority = [0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 12, 14, 15, 6, 8, 10, 13]
+electrical_priority = [0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 12, 14, 15, 6, 8, 10, 13]
 
-mechanic_priority = [7, 8, 10, 14, 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 12, 14, 15]
+mechanical_priority = [7, 8, 10, 14, 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 12, 14, 15]
 
-priority_dict = {"default": default_priority, "electric": electric_priority,
-                 "mechanic": mechanic_priority}
+priority_dict = {"default": default_priority,
+                 "electrical": electrical_priority,
+                 "mechanical": mechanical_priority}
 
 
 class Unit:
