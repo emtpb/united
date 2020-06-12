@@ -2,7 +2,7 @@
 Welcome to United's documentation!
 **********************************
 
-Example Python Project containing all necessary files for a Python distribution.
+A SI unit representation and conversion tool.
 
 
 Contents
