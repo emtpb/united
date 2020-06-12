@@ -11,7 +11,7 @@ To use United in a project::
    >>> my_unit.quantity
    Resistance
 
-You can also do different arithmetic operations::
+The Unit class also supports arithmetic operations::
 
    >>> ampere = Unit(["A"])
    >>> ampere**2
