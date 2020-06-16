@@ -9,8 +9,21 @@ This project follows the guidelines of `Keep a changelog`_ and adheres to
 .. _Semantic versioning: https://semver.org/
 
 
-[0.1.0] - 2020-06-03
-====================
+`0.1.1`_ - 2020-06-16
+=====================
+
+Fixed
+-----
+* Minor documentation issues.
+
+
+`0.1.0`_ - 2020-06-03
+=====================
+
 Added
 -----
-* Initial implementation
+* Initial implementation.
+
+
+.. _0.1.1: https://github.com/emtpb/united/releases/tag/0.1.1
+.. _0.1.0: https://github.com/emtpb/united/releases/tag/0.1.0
