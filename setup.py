@@ -15,7 +15,7 @@ except FileNotFoundError:
 setup(
     name='united',
 
-    description='Example Python Project containing all necessary files for a Python distribution.',
+    description='A SI unit representation and conversion tool.',
     long_description=long_description,
     author='Kevin Koch',
     author_email='kevink2@mail.uni-paderborn.de',
