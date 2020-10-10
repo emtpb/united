@@ -178,3 +178,15 @@ def test_conversion_priority():
     ud.Unit.conversion_priority = "Test"
     with pytest.raises(ValueError):
         ud.Unit("s")
+
+
+@pytest.mark.parametrize("first_num, first_denom, second_num, second_denom, "
+                         "result",
+                         [(["s"], [], ["s", "m"], ["kg"], True),
+                          (["s"], ["m"], ["s", "s"], ["m"], True),
+                          (["s"], [], ["m"], ["s"], False),
+                          (["m"], ["V"], ["m"], ["s"], False)])
+def test_dividers(first_num, first_denom, second_num, second_denom, result):
+    ud.Unit.conversion_priority = "default"
+    assert ud.test_divider(first_num, first_denom,
+                           second_num, second_denom) == result
