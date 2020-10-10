@@ -176,10 +176,10 @@ class Unit:
             while found:
                 found = False
                 for conversion in look_up_table:
-                    if test_subset(conversion.numerators,
-                                   conversion.denominators,
-                                   self.reduced_numerators,
-                                   self.reduced_denominators) \
+                    if test_divider(conversion.numerators,
+                                    conversion.denominators,
+                                    self.reduced_numerators,
+                                    self.reduced_denominators) \
                             and not conversion.match_exactly:
                         for j in conversion.numerators:
                             self.reduced_numerators.remove(j)
@@ -189,10 +189,10 @@ class Unit:
                         found = True
                         break
 
-                    elif test_subset(conversion.denominators,
-                                     conversion.numerators,
-                                     self.reduced_numerators,
-                                     self.reduced_denominators) and \
+                    elif test_divider(conversion.denominators,
+                                      conversion.numerators,
+                                      self.reduced_numerators,
+                                      self.reduced_denominators) and \
                             conversion.reciprocal and \
                             not conversion.match_exactly:
                         for j in conversion.numerators:
@@ -338,9 +338,9 @@ def convert_fraction_to_string(numerators, denominators):
         return string_numerators + "/" + string_denominators
 
 
-def test_subset(numerators_first, denominators_first, numerators_second,
-                denominators_second):
-    """Returns whether the first fraction is part of the second fraction.
+def test_divider(numerators_first, denominators_first, numerators_second,
+                 denominators_second):
+    """Returns whether the first fraction divides the second fraction.
 
     Args:
         numerators_first (tuple): Numerators of the first fraction.
