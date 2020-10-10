@@ -136,7 +136,8 @@ def test_eq():
                           (["m", "kg"], ["s", "s"], "N"),
                           ((), ("m", "kg"), "1/(m*kg)"),
                           (("m", "kg"), ("s",), "(m*kg)/s"),
-                          (("m", "kg"), ("s", "cd"), "(m*kg)/(s*cd)")])
+                          (("m", "kg"), ("s", "cd"), "(m*kg)/(s*cd)"),
+                          ((), ("s",), "Hz"), (("m",), ("s",), "m/s")])
 def test_repr(numerator, denominator, expected):
     ud.Unit.priority_configuration = "default"
     a = ud.Unit(numerator, denominator)
@@ -156,7 +157,7 @@ def test_quantity_property():
                          [(["m", "m", "kg"], ["s", "s"], "J"),
                           (["V"], [], "J/C")])
 def test_mechanic_prio(numerator, denominator, expected):
-    ud.Unit.conversion_priority = "mechanic"
+    ud.Unit.conversion_priority = "mechanical"
     a = ud.Unit(numerator, denominator)
     assert repr(a) == expected
 
