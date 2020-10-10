@@ -37,7 +37,7 @@ class NamedUnit:
 
 s = NamedUnit("s", "Time")
 kg = NamedUnit("kg", "Mass")
-A = NamedUnit("A", "Ampere")
+A = NamedUnit("A", "Current")
 m = NamedUnit("m", "Length")
 K = NamedUnit("K", "Temperature")
 mol = NamedUnit("mol", "Amount of substance")
