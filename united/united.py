@@ -37,7 +37,7 @@ class NamedUnit:
 
 s = NamedUnit("s", "Time")
 kg = NamedUnit("kg", "Mass")
-A = NamedUnit("A", "Ampere")
+A = NamedUnit("A", "Current")
 m = NamedUnit("m", "Length")
 K = NamedUnit("K", "Temperature")
 mol = NamedUnit("mol", "Amount of substance")
@@ -54,6 +54,7 @@ J = NamedUnit("J", "Energy")
 N = NamedUnit("N", "Force")
 T = NamedUnit("T", "Magnetic Induction")
 Pa = NamedUnit("Pa", "Pressure")
+Hz = NamedUnit("Hz", "Frequency")
 
 si_base_units = {"s": s, "kg": kg, "A": A, "m": m, "K": K, "mol": mol,
                  "cd": cd}
@@ -66,6 +67,7 @@ class Conversion:
     denominators: tuple
     result: NamedUnit
     reciprocal: bool = True
+    match_exactly: bool = False
 
 
 conversion_list = [Conversion((m, m, kg), (s, s, s, A), V),
@@ -83,7 +85,8 @@ conversion_list = [Conversion((m, m, kg), (s, s, s, A), V),
                    Conversion((V, A), (), W),
                    Conversion((), (Ohm,), S, False),
                    Conversion((N, m), (), J),
-                   Conversion((A, s), (), C)
+                   Conversion((A, s), (), C),
+                   Conversion((), (s,), Hz, False, True)
                    ]
 
 si_base_conversions = [x for x in conversion_list
@@ -173,12 +176,11 @@ class Unit:
             while found:
                 found = False
                 for conversion in look_up_table:
-                    if all([True if self.reduced_numerators.count(
-                            j) >= conversion.numerators.count(j)
-                            else False for j in conversion.numerators]) and \
-                            all([True if self.reduced_denominators.count(
-                                j) >= conversion.denominators.count(j)
-                                 else False for j in conversion.denominators]):
+                    if test_divider(conversion.numerators,
+                                    conversion.denominators,
+                                    self.reduced_numerators,
+                                    self.reduced_denominators) \
+                            and not conversion.match_exactly:
                         for j in conversion.numerators:
                             self.reduced_numerators.remove(j)
                         for j in conversion.denominators:
@@ -187,20 +189,26 @@ class Unit:
                         found = True
                         break
 
-                    elif all(
-                            [True if self.reduced_numerators.count(
-                                j) >= conversion.denominators.count(j)
-                             else False for j in
-                             conversion.denominators]) and \
-                            all([True if self.reduced_denominators.count(
-                                j) >= conversion.numerators.count(j) else False
-                                 for j in conversion.numerators]) and \
-                            conversion.reciprocal is True:
+                    elif test_divider(conversion.denominators,
+                                      conversion.numerators,
+                                      self.reduced_numerators,
+                                      self.reduced_denominators) and \
+                            conversion.reciprocal and \
+                            not conversion.match_exactly:
                         for j in conversion.numerators:
                             self.reduced_denominators.remove(j)
                         for j in conversion.denominators:
                             self.reduced_numerators.remove(j)
                         self.reduced_denominators.append(conversion.result)
+                        found = True
+                        break
+                    elif conversion.match_exactly and \
+                            all([True if self.reduced_numerators.count(j) == conversion.numerators.count(j)
+                                else False for j in self.reduced_numerators]) and \
+                            all([True if self.reduced_denominators.count(j) == conversion.denominators.count(j)
+                                else False for j in self.reduced_denominators]):
+                        self.reduced_numerators = [conversion.result]
+                        self.reduced_denominators = []
                         found = True
                         break
             self.repr = convert_fraction_to_string(self.reduced_numerators,
@@ -328,3 +336,22 @@ def convert_fraction_to_string(numerators, denominators):
             string_denominators = "(" + string_denominators + ")"
 
         return string_numerators + "/" + string_denominators
+
+
+def test_divider(numerators_first, denominators_first, numerators_second,
+                 denominators_second):
+    """Returns whether the first fraction divides the second fraction.
+
+    Args:
+        numerators_first (tuple): Numerators of the first fraction.
+        denominators_first (tuple): Denominators of the first fraction.
+        numerators_second (tuple): Numerators of the second fraction.
+        denominators_second (tuple): Denominators of the second fraction.
+    """
+    if all([True if numerators_second.count(j) >= numerators_first.count(j)
+            else False for j in numerators_first]) and \
+        all([True if denominators_second.count(j) >= denominators_first.count(j)
+            else False for j in denominators_first]):
+        return True
+    else:
+        return False

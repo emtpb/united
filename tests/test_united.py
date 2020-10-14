@@ -136,7 +136,8 @@ def test_eq():
                           (["m", "kg"], ["s", "s"], "N"),
                           ((), ("m", "kg"), "1/(m*kg)"),
                           (("m", "kg"), ("s",), "(m*kg)/s"),
-                          (("m", "kg"), ("s", "cd"), "(m*kg)/(s*cd)")])
+                          (("m", "kg"), ("s", "cd"), "(m*kg)/(s*cd)"),
+                          ((), ("s",), "Hz"), (("m",), ("s",), "m/s")])
 def test_repr(numerator, denominator, expected):
     ud.Unit.priority_configuration = "default"
     a = ud.Unit(numerator, denominator)
@@ -156,7 +157,7 @@ def test_quantity_property():
                          [(["m", "m", "kg"], ["s", "s"], "J"),
                           (["V"], [], "J/C")])
 def test_mechanic_prio(numerator, denominator, expected):
-    ud.Unit.conversion_priority = "mechanic"
+    ud.Unit.conversion_priority = "mechanical"
     a = ud.Unit(numerator, denominator)
     assert repr(a) == expected
 
@@ -177,3 +178,15 @@ def test_conversion_priority():
     ud.Unit.conversion_priority = "Test"
     with pytest.raises(ValueError):
         ud.Unit("s")
+
+
+@pytest.mark.parametrize("first_num, first_denom, second_num, second_denom, "
+                         "result",
+                         [(["s"], [], ["s", "m"], ["kg"], True),
+                          (["s"], ["m"], ["s", "s"], ["m"], True),
+                          (["s"], [], ["m"], ["s"], False),
+                          (["m"], ["V"], ["m"], ["s"], False)])
+def test_dividers(first_num, first_denom, second_num, second_denom, result):
+    ud.Unit.conversion_priority = "default"
+    assert ud.test_divider(first_num, first_denom,
+                           second_num, second_denom) == result
