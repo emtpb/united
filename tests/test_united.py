@@ -137,7 +137,9 @@ def test_eq():
                           ((), ("m", "kg"), "1/(m*kg)"),
                           (("m", "kg"), ("s",), "(m*kg)/s"),
                           (("m", "kg"), ("s", "cd"), "(m*kg)/(s*cd)"),
-                          ((), ("s",), "Hz"), (("m",), ("s",), "m/s")])
+                          ((), ("s",), "Hz"), (("m",), ("s",), "m/s"),
+                          (("rad",), (), "rad"), (("rad", "s"), (), "rad*s"),
+                          ((), ("rad",), "1/rad")])
 def test_repr(numerator, denominator, expected):
     ud.Unit.priority_configuration = "default"
     a = ud.Unit(numerator, denominator)
