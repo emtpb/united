@@ -135,6 +135,11 @@ class Unit:
         if denominators is None:
             denominators = []
 
+        if not isinstance(numerators, list):
+            raise ValueError("Numerators has to be list")
+        if not isinstance(denominators, list):
+            raise ValueError("Denominators has to be list")
+
         self.numerators = []
         self.denominators = []
         self.repr = None

@@ -134,12 +134,12 @@ def test_eq():
                           (["F"], ["C"], "1/V"),
                           (["V", "s"], [], "Wb"),
                           (["m", "kg"], ["s", "s"], "N"),
-                          ((), ("m", "kg"), "1/(m*kg)"),
-                          (("m", "kg"), ("s",), "(m*kg)/s"),
-                          (("m", "kg"), ("s", "cd"), "(m*kg)/(s*cd)"),
-                          ((), ("s",), "Hz"), (("m",), ("s",), "m/s"),
-                          (("rad",), (), "rad"), (("rad", "s"), (), "rad*s"),
-                          ((), ("rad",), "1/rad")])
+                          ([], ["m", "kg"], "1/(m*kg)"),
+                          (["m", "kg"], ["s"], "(m*kg)/s"),
+                          (["m", "kg"], ["s", "cd"], "(m*kg)/(s*cd)"),
+                          ([], ["s"], "Hz"), (["m"], ["s"], "m/s"),
+                          (["rad"], [], "rad"), (["rad", "s"], [], "rad*s"),
+                          ([], ["rad"], "1/rad")])
 def test_repr(numerator, denominator, expected):
     ud.Unit.priority_configuration = "default"
     a = ud.Unit(numerator, denominator)
@@ -176,10 +176,10 @@ def test_fix_repr(numerator, denominator, expected):
 
 def test_conversion_priority():
     ud.Unit.conversion_priority = "default"
-    ud.Unit("s")
+    ud.Unit(["s"])
     ud.Unit.conversion_priority = "Test"
     with pytest.raises(ValueError):
-        ud.Unit("s")
+        ud.Unit(["s"])
 
 
 @pytest.mark.parametrize("first_num, first_denom, second_num, second_denom, "
