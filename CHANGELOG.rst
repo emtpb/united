@@ -8,6 +8,14 @@ This project follows the guidelines of `Keep a changelog`_ and adheres to
 .. _Keep a changelog: http://keepachangelog.com/
 .. _Semantic versioning: https://semver.org/
 
+`0.1.3`_ - 2021-03-08
+=====================
+
+Added
+-----
+* Named unit for radians.
+
+
 `0.1.2`_ - 2020-10-14
 =====================
 
@@ -37,6 +45,7 @@ Added
 * Initial implementation.
 
 
+.. _0.1.3: https://github.com/emtpb/united/releases/tag/0.1.3
 .. _0.1.2: https://github.com/emtpb/united/releases/tag/0.1.2
 .. _0.1.1: https://github.com/emtpb/united/releases/tag/0.1.1
 .. _0.1.0: https://github.com/emtpb/united/releases/tag/0.1.0
