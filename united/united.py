@@ -35,6 +35,7 @@ class NamedUnit:
         return self.unit
 
 
+rad = NamedUnit("rad", "Radiant")
 s = NamedUnit("s", "Time")
 kg = NamedUnit("kg", "Mass")
 A = NamedUnit("A", "Current")
@@ -56,8 +57,8 @@ T = NamedUnit("T", "Magnetic Induction")
 Pa = NamedUnit("Pa", "Pressure")
 Hz = NamedUnit("Hz", "Frequency")
 
-si_base_units = {"s": s, "kg": kg, "A": A, "m": m, "K": K, "mol": mol,
-                 "cd": cd}
+si_units = {"s": s, "kg": kg, "A": A, "m": m, "K": K, "mol": mol,
+            "cd": cd, "rad": rad}
 
 
 @dataclass
@@ -90,8 +91,8 @@ conversion_list = [Conversion((m, m, kg), (s, s, s, A), V),
                    ]
 
 si_base_conversions = [x for x in conversion_list
-                       if set(x.numerators).issubset(si_base_units.values())
-                       and set(x.denominators).issubset(si_base_units.values())]
+                       if set(x.numerators).issubset(si_units.values())
+                       and set(x.denominators).issubset(si_units.values())]
 
 
 default_priority = [x for x in range(len(conversion_list))]
@@ -134,13 +135,18 @@ class Unit:
         if denominators is None:
             denominators = []
 
+        if not isinstance(numerators, list):
+            raise ValueError("Numerators has to be list")
+        if not isinstance(denominators, list):
+            raise ValueError("Denominators has to be list")
+
         self.numerators = []
         self.denominators = []
         self.repr = None
         # Split given numerators into their SI base units if needed
         for numerator in numerators:
-            if numerator in [repr(x) for x in si_base_units.values()]:
-                self.numerators.append(si_base_units[numerator])
+            if numerator in [repr(x) for x in si_units.values()]:
+                self.numerators.append(si_units[numerator])
                 continue
             for conversion in si_base_conversions:
                 if repr(conversion.result) == numerator:
@@ -149,8 +155,8 @@ class Unit:
                     continue
         # Split given denominators into their SI base units if needed
         for denominator in denominators:
-            if denominator in [repr(x) for x in si_base_units.values()]:
-                self.denominators.append(si_base_units[denominator])
+            if denominator in [repr(x) for x in si_units.values()]:
+                self.denominators.append(si_units[denominator])
                 continue
 
             for conversion in si_base_conversions:
