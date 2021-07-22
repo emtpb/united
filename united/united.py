@@ -314,12 +314,29 @@ def convert_fraction_to_string(numerators, denominators):
     """
     string_numerators = ""
     string_denominators = ""
+    # Find duplicates and replace with them with the power of the units
+    duplicates = [(item, count) for item, count in Counter(numerators).items() if count > 1]
+    seen = set()
+    numerators = [x for x in numerators if not (x in seen or seen.add(x))]
+    for duplicate in duplicates:
+        for index, unit in enumerate(numerators):
+            if duplicate[0] == unit:
+                numerators[index] = "{}^{}".format(duplicate[0], duplicate[1])
+    # Put multiplication sign between every unit
     for numerator in numerators:
         if string_numerators:
             string_numerators = "{}*{}".format(string_numerators, numerator)
         else:
             string_numerators = "{}".format(numerator)
-
+    # Find duplicates and replace with them with the power of the units
+    duplicates = [(item, count) for item, count in Counter(denominators).items() if count > 1]
+    seen = set()
+    denominators = [x for x in denominators if not (x in seen or seen.add(x))]
+    for duplicate in duplicates:
+        for index, unit in enumerate(denominators):
+            if duplicate[0] == unit:
+                denominators[index] = "{}^{}".format(duplicate[0], duplicate[1])
+    # Put multiplication sign between every unit
     for denominator in denominators:
         if string_denominators:
             string_denominators = "{}*{}".format(string_denominators,
