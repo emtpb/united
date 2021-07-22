@@ -208,15 +208,31 @@ class Unit:
                         self.reduced_denominators.append(conversion.result)
                         found = True
                         break
-                    elif conversion.match_exactly and \
-                            all([True if self.reduced_numerators.count(j) == conversion.numerators.count(j)
-                                else False for j in self.reduced_numerators]) and \
-                            all([True if self.reduced_denominators.count(j) == conversion.denominators.count(j)
-                                else False for j in self.reduced_denominators]):
-                        self.reduced_numerators = [conversion.result]
-                        self.reduced_denominators = []
-                        found = True
-                        break
+                    elif conversion.match_exactly:
+                        # Check if the numerator and denominator match to the
+                        # conversion regardless of the order
+                        tmp_conv_num = list(conversion.numerators)
+                        tmp_conv_denom = list(conversion.denominators)
+                        equal = True
+                        for unit in self.reduced_numerators:
+                            if unit in tmp_conv_num:
+                                tmp_conv_num.remove(unit)
+                            else:
+                                equal = False
+                        if tmp_conv_num:
+                            equal = False
+                        for unit in self.reduced_denominators:
+                            if unit in tmp_conv_denom:
+                                tmp_conv_denom.remove(unit)
+                            else:
+                                equal = False
+                        if tmp_conv_denom:
+                            equal = False
+                        if equal:
+                            self.reduced_numerators = [conversion.result]
+                            self.reduced_denominators = []
+                            found = True
+                            break
             self.repr = convert_fraction_to_string(self.reduced_numerators,
                                                    self.reduced_denominators)
         else:

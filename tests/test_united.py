@@ -140,7 +140,7 @@ def test_eq():
                           ([], ["s"], "Hz"), (["m"], ["s"], "m/s"),
                           (["rad"], [], "rad"), (["rad", "s"], [], "rad*s"),
                           ([], ["rad"], "1/rad"), (["V", "V"], [], "V^2"),
-                          ([], ["V", "V"], "1/V^2")])
+                          ([], ["V", "V"], "1/V^2"), (["V"], ["V"], "1")])
 def test_repr(numerator, denominator, expected):
     ud.Unit.priority_configuration = "default"
     a = ud.Unit(numerator, denominator)
