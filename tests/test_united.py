@@ -175,6 +175,14 @@ def test_fix_repr(numerator, denominator, expected):
     assert repr(a) == expected
 
 
+@pytest.mark.parametrize("numerator, denominator, expected",
+                         [(["s"], [], "Time"), (["V", "A"], [], None)])
+def test_fix_repr(numerator, denominator, expected):
+    ud.Unit.conversion_priority = "default"
+    a = ud.Unit(numerator, denominator, fix_repr=True)
+    assert a.quantity == expected
+
+
 def test_conversion_priority():
     ud.Unit.conversion_priority = "default"
     ud.Unit(["s"])
@@ -191,5 +199,5 @@ def test_conversion_priority():
                           (["m"], ["V"], ["m"], ["s"], False)])
 def test_dividers(first_num, first_denom, second_num, second_denom, result):
     ud.Unit.conversion_priority = "default"
-    assert ud.test_divider(first_num, first_denom,
-                           second_num, second_denom) == result
+    assert ud.check_divider(first_num, first_denom,
+                            second_num, second_denom) == result
