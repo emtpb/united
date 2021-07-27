@@ -57,8 +57,13 @@ T = NamedUnit("T", "Magnetic Induction")
 Pa = NamedUnit("Pa", "Pressure")
 Hz = NamedUnit("Hz", "Frequency")
 
-si_units = {"s": s, "kg": kg, "A": A, "m": m, "K": K, "mol": mol,
-            "cd": cd, "rad": rad}
+si_base_units = {"s": s, "kg": kg, "A": A, "m": m, "K": K, "mol": mol,
+                 "cd": cd, "rad": rad}
+
+si_units = {"rad": rad, "Ohm": Ohm, "V": V, "F": F, "S": S, "W": W, "C": C,
+            "H": H, "Wb": Wb, "J": J, "N": N, "T": T, "Pa": Pa, "Hz": Hz}
+
+si_units.update(si_base_units)
 
 
 @dataclass
@@ -91,8 +96,8 @@ conversion_list = [Conversion((m, m, kg), (s, s, s, A), V),
                    ]
 
 si_base_conversions = [x for x in conversion_list
-                       if set(x.numerators).issubset(si_units.values())
-                       and set(x.denominators).issubset(si_units.values())]
+                       if set(x.numerators).issubset(si_base_units.values())
+                       and set(x.denominators).issubset(si_base_units.values())]
 
 
 default_priority = [x for x in range(len(conversion_list))]
@@ -111,7 +116,8 @@ class Unit:
     unit as SI units. Supports arithmetic operations like multiplying and
     dividing with other :class:`.Unit` instances. When representing the unit,
     an algorithm tries to find the best fitting unit out of the SI units via
-    a lookup table."""
+    a lookup table.
+    """
 
     conversion_priority = "default"
 
@@ -145,8 +151,8 @@ class Unit:
         self.repr = None
         # Split given numerators into their SI base units if needed
         for numerator in numerators:
-            if numerator in [repr(x) for x in si_units.values()]:
-                self.numerators.append(si_units[numerator])
+            if numerator in [repr(x) for x in si_base_units.values()]:
+                self.numerators.append(si_base_units[numerator])
                 continue
             for conversion in si_base_conversions:
                 if repr(conversion.result) == numerator:
@@ -155,8 +161,8 @@ class Unit:
                     continue
         # Split given denominators into their SI base units if needed
         for denominator in denominators:
-            if denominator in [repr(x) for x in si_units.values()]:
-                self.denominators.append(si_units[denominator])
+            if denominator in [repr(x) for x in si_base_units.values()]:
+                self.denominators.append(si_base_units[denominator])
                 continue
 
             for conversion in si_base_conversions:
@@ -182,10 +188,10 @@ class Unit:
             while found:
                 found = False
                 for conversion in look_up_table:
-                    if test_divider(conversion.numerators,
-                                    conversion.denominators,
-                                    self.reduced_numerators,
-                                    self.reduced_denominators) \
+                    if check_divider(conversion.numerators,
+                                     conversion.denominators,
+                                     self.reduced_numerators,
+                                     self.reduced_denominators) \
                             and not conversion.match_exactly:
                         for j in conversion.numerators:
                             self.reduced_numerators.remove(j)
@@ -195,10 +201,10 @@ class Unit:
                         found = True
                         break
 
-                    elif test_divider(conversion.denominators,
-                                      conversion.numerators,
-                                      self.reduced_numerators,
-                                      self.reduced_denominators) and \
+                    elif check_divider(conversion.denominators,
+                                       conversion.numerators,
+                                       self.reduced_numerators,
+                                       self.reduced_denominators) and \
                             conversion.reciprocal and \
                             not conversion.match_exactly:
                         for j in conversion.numerators:
@@ -208,18 +214,20 @@ class Unit:
                         self.reduced_denominators.append(conversion.result)
                         found = True
                         break
-                    elif conversion.match_exactly and \
-                            all([True if self.reduced_numerators.count(j) == conversion.numerators.count(j)
-                                else False for j in self.reduced_numerators]) and \
-                            all([True if self.reduced_denominators.count(j) == conversion.denominators.count(j)
-                                else False for j in self.reduced_denominators]):
-                        self.reduced_numerators = [conversion.result]
-                        self.reduced_denominators = []
-                        found = True
-                        break
+                    elif conversion.match_exactly:
+                        if check_exact_match(conversion.numerators,
+                                             conversion.denominators,
+                                             self.reduced_numerators,
+                                             self.reduced_denominators):
+                            self.reduced_numerators = [conversion.result]
+                            self.reduced_denominators = []
+                            found = True
+                            break
             self.repr = convert_fraction_to_string(self.reduced_numerators,
                                                    self.reduced_denominators)
         else:
+            self.reduced_numerators = [si_units.get(numerator) for numerator in numerators if si_units.get(numerator)]
+            self.reduced_denominators = [si_units.get(denominator) for denominator in denominators if si_units.get(denominator)]
             self.repr = convert_fraction_to_string(numerators, denominators)
 
     def __mul__(self, other):
@@ -314,12 +322,29 @@ def convert_fraction_to_string(numerators, denominators):
     """
     string_numerators = ""
     string_denominators = ""
+    # Find duplicates and replace with them with the power of the units
+    duplicates = [(item, count) for item, count in Counter(numerators).items() if count > 1]
+    seen = set()
+    numerators = [x for x in numerators if not (x in seen or seen.add(x))]
+    for duplicate in duplicates:
+        for index, unit in enumerate(numerators):
+            if duplicate[0] == unit:
+                numerators[index] = "{}^{}".format(duplicate[0], duplicate[1])
+    # Put multiplication sign between every unit
     for numerator in numerators:
         if string_numerators:
             string_numerators = "{}*{}".format(string_numerators, numerator)
         else:
             string_numerators = "{}".format(numerator)
-
+    # Find duplicates and replace with them with the power of the units
+    duplicates = [(item, count) for item, count in Counter(denominators).items() if count > 1]
+    seen = set()
+    denominators = [x for x in denominators if not (x in seen or seen.add(x))]
+    for duplicate in duplicates:
+        for index, unit in enumerate(denominators):
+            if duplicate[0] == unit:
+                denominators[index] = "{}^{}".format(duplicate[0], duplicate[1])
+    # Put multiplication sign between every unit
     for denominator in denominators:
         if string_denominators:
             string_denominators = "{}*{}".format(string_denominators,
@@ -344,20 +369,50 @@ def convert_fraction_to_string(numerators, denominators):
         return string_numerators + "/" + string_denominators
 
 
-def test_divider(numerators_first, denominators_first, numerators_second,
-                 denominators_second):
+def check_divider(numerators_0, denominators_0, numerators_1,
+                  denominators_1):
     """Returns whether the first fraction divides the second fraction.
 
     Args:
-        numerators_first (tuple): Numerators of the first fraction.
-        denominators_first (tuple): Denominators of the first fraction.
-        numerators_second (tuple): Numerators of the second fraction.
-        denominators_second (tuple): Denominators of the second fraction.
+        numerators_0 (tuple): Numerators of the first fraction.
+        denominators_0 (tuple): Denominators of the first fraction.
+        numerators_1 (tuple): Numerators of the second fraction.
+        denominators_1 (tuple): Denominators of the second fraction.
     """
-    if all([True if numerators_second.count(j) >= numerators_first.count(j)
-            else False for j in numerators_first]) and \
-        all([True if denominators_second.count(j) >= denominators_first.count(j)
-            else False for j in denominators_first]):
+    if all([True if numerators_1.count(j) >= numerators_0.count(j)
+            else False for j in numerators_0]) and \
+        all([True if denominators_1.count(j) >= denominators_0.count(j)
+            else False for j in denominators_0]):
         return True
     else:
         return False
+
+
+def check_exact_match(numerators_0, denominators_0, numerators_1,
+                      denominators_1):
+    """Returns whether the first fraction matches the second fraction.
+
+    Args:
+        numerators_0 (tuple, list): Numerators of the first fraction.
+        denominators_0 (tuple, list): Denominators of the first fraction.
+        numerators_1 (tuple, list): Numerators of the second fraction.
+        denominators_1 (tuple, list): Denominators of the second fraction.
+    """
+    tmp_num = list(numerators_0)
+    tmp_denom = list(denominators_0)
+    equal = True
+    for unit in numerators_1:
+        if unit in tmp_num:
+            tmp_num.remove(unit)
+        else:
+            equal = False
+    if tmp_num:
+        equal = False
+    for unit in denominators_1:
+        if unit in tmp_denom:
+            tmp_denom.remove(unit)
+        else:
+            equal = False
+    if tmp_denom:
+        equal = False
+    return equal
